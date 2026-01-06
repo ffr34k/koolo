@@ -1,5 +1,11 @@
 // Bulk apply settings to multiple supervisors
 document.addEventListener('DOMContentLoaded', function () {
+    // Dynamic section definitions fetched from API
+    let SECTION_DEFINITIONS = [];
+    let RUN_DETAIL_DEFINITIONS = [];
+    let RUN_DETAILS_INCLUDED_WITH_RUNS = true;
+    let sectionsLoaded = false;
+
     const modal = document.getElementById('supervisorModal');
     const openButtons = [];
     const bulkOpenButton = document.getElementById('bulkApplyOpenBtn');
@@ -85,7 +91,8 @@ document.addEventListener('DOMContentLoaded', function () {
         'barb_leveling',
     ]);
     const levelingSupervisors = new Set();
-    const SECTION_CHECKBOX_IDS = [
+    // Fallback section IDs (used if API fails)
+    const FALLBACK_SECTION_CHECKBOX_IDS = [
         'sectionHealth',
         'sectionMerc',
         'sectionRuns',
@@ -93,12 +100,54 @@ document.addEventListener('DOMContentLoaded', function () {
         'sectionCubeRecipes',
         'sectionRunewordMaker',
         'sectionGeneral',
+        'sectionGeneralExtras',
         'sectionClient',
         'sectionScheduler',
-        'sectionMuling',   // [Added]
-        'sectionShopping', // [Added]
+        'sectionMuling',
+        'sectionShopping',
     ];
     let sectionSelectAllCheckbox = null;
+
+    // Fetch bulk apply sections from API
+    async function fetchBulkApplySections() {
+        try {
+            const response = await fetch('/api/supervisors/bulk-apply/sections');
+            if (!response.ok) {
+                throw new Error('Failed to fetch sections');
+            }
+            const data = await response.json();
+            SECTION_DEFINITIONS = data.sections || [];
+            RUN_DETAIL_DEFINITIONS = data.runDetails || [];
+            RUN_DETAILS_INCLUDED_WITH_RUNS = data.runDetailsIncludedWithRuns !== false;
+            sectionsLoaded = true;
+            return data;
+        } catch (error) {
+            console.error('Failed to fetch bulk apply sections:', error);
+            // Use fallback if API fails
+            sectionsLoaded = false;
+            return null;
+        }
+    }
+
+    // Capitalize first letter of string
+    function capitalize(str) {
+        return str.charAt(0).toUpperCase() + str.slice(1);
+    }
+
+    // Escape HTML to prevent XSS
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    // Get dynamic section checkbox IDs based on loaded definitions
+    function getSectionCheckboxIds() {
+        if (sectionsLoaded && SECTION_DEFINITIONS.length > 0) {
+            return SECTION_DEFINITIONS.map(s => 'section' + capitalize(s.id));
+        }
+        return FALLBACK_SECTION_CHECKBOX_IDS;
+    }
 
     // Custom 3-button warning overlay for leveling supervisors
     const levelingWarningOverlay = document.getElementById('levelingWarningOverlay');
@@ -142,7 +191,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!sectionSelectAllCheckbox) {
             return;
         }
-        const checkboxes = SECTION_CHECKBOX_IDS
+        const checkboxIds = getSectionCheckboxIds();
+        const checkboxes = checkboxIds
             .map(id => document.getElementById(id))
             .filter(Boolean);
         const total = checkboxes.length;
@@ -456,7 +506,13 @@ document.addEventListener('DOMContentLoaded', function () {
         openButtons.push(bulkOpenButton);
     }
 
-    function openModal() {
+    async function openModal() {
+        // Fetch sections if not already loaded
+        if (!sectionsLoaded) {
+            await fetchBulkApplySections();
+            renderSectionCheckboxes();
+            setupSectionEventListeners();
+        }
         modal.style.display = 'flex';
     }
 
@@ -465,7 +521,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     openButtons.forEach(btn => {
-        btn.addEventListener('click', openModal);
+        btn.addEventListener('click', function() {
+            openModal();
+        });
     });
 
     if (closeButton) {
@@ -485,89 +543,136 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Initialize section selection UI inside the modal
     const sectionContainer = modal.querySelector('.modal-body .mb-2');
-    if (sectionContainer) {
-        sectionContainer.innerHTML = ''
-            + '<div class="supervisor-header-row">'
+
+    // Render section checkboxes dynamically from API data or fallback
+    function renderSectionCheckboxes() {
+        if (!sectionContainer) return;
+
+        let html = '<div class="supervisor-header-row">'
             + '  <strong>Select settings</strong>'
             + '  <label class="supervisor-select-all" for="sectionSelectAll">'
             + '    <input type="checkbox" id="sectionSelectAll">'
             + '    <span>Select all settings</span>'
             + '  </label>'
             + '</div>'
-            + '<div class="supervisor-section-toggles">'
-            + '  <label>'
-            + '    <input type="checkbox" id="sectionHealth">'
-            + '    <span>Health settings</span>'
-            + '  </label>'
-            + '  <label>'
-            + '    <input type="checkbox" id="sectionMerc">'
-            + '    <span>Merc settings</span>'
-            + '  </label>'
-            + '  <label>'
-            + '    <input type="checkbox" id="sectionRuns">'
-            + '    <span>Run settings</span>'
-            + '  </label>'
-            + '  <label>'
-            + '    <input type="checkbox" id="sectionPacketCasting">'
-            + '    <span>Using Packets</span>'
-            + '  </label>'
-            + '  <label>'
-            + '    <input type="checkbox" id="sectionCubeRecipes">'
-            + '    <span>Cube recipes</span>'
-            + '  </label>'
-            + '  <label>'
-            + '    <input type="checkbox" id="sectionRunewordMaker">'
-            + '    <span>Runeword settings</span>'
-            + '  </label>'
-            + '  <label>'
-            + '    <input type="checkbox" id="sectionGeneral">'
-            + '    <span>General settings</span>'
-            + '  </label>'
-            + '  <label>'
-            + '    <input type="checkbox" id="sectionClient">'
-            + '    <span>Client settings</span>'
-            + '  </label>'
-            + '  <label>'
-            + '    <input type="checkbox" id="sectionScheduler">'
-            + '    <span>Scheduler settings</span>'
-            + '  </label>'
-            + '  <label>'
-            + '    <input type="checkbox" id="sectionMuling">'
-            + '    <span>Muling settings</span>'
-            + '  </label>'
-            + '  <label>'
-            + '    <input type="checkbox" id="sectionShopping">'
-            + '    <span>Shopping settings</span>'
-            + '  </label>'
-            + '</div>'
+            + '<div class="supervisor-section-toggles">';
+
+        if (sectionsLoaded && SECTION_DEFINITIONS.length > 0) {
+            // Dynamic rendering from API data
+            const mainSections = SECTION_DEFINITIONS.filter(s => s.category === 'main');
+            const advancedSections = SECTION_DEFINITIONS.filter(s => s.category === 'advanced');
+            const sensitiveSections = SECTION_DEFINITIONS.filter(s => s.category === 'sensitive');
+
+            mainSections.sort((a, b) => a.order - b.order).forEach(section => {
+                const safeId = escapeHtml(section.id);
+                const checkboxId = 'section' + capitalize(safeId);
+                html += '<label title="' + escapeHtml(section.description || '') + '">'
+                    + '  <input type="checkbox" id="' + checkboxId + '" data-section-id="' + safeId + '">'
+                    + '  <span>' + escapeHtml(section.label) + '</span>'
+                    + '</label>';
+            });
+
+            if (advancedSections.length > 0) {
+                html += '<div class="bulk-apply-advanced-divider" style="width:100%;text-align:left;font-size:0.8em;color:#6b7280;margin:8px 0 4px 0;padding-top:8px;border-top:1px solid #e5e7eb;">Advanced</div>';
+                advancedSections.sort((a, b) => a.order - b.order).forEach(section => {
+                    const safeId = escapeHtml(section.id);
+                    const checkboxId = 'section' + capitalize(safeId);
+                    html += '<label title="' + escapeHtml(section.description || '') + '">'
+                        + '  <input type="checkbox" id="' + checkboxId + '" data-section-id="' + safeId + '">'
+                        + '  <span>' + escapeHtml(section.label) + '</span>'
+                        + '</label>';
+                });
+            }
+
+            // Sensitive section - hidden by default with expandable toggle
+            if (sensitiveSections.length > 0) {
+                html += '<div class="bulk-apply-sensitive-toggle" style="width:100%;margin:12px 0 4px 0;">'
+                    + '  <button type="button" id="showSensitiveBtn" style="background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:4px 12px;border-radius:4px;cursor:pointer;font-size:0.85em;">'
+                    + '    Show sensitive fields (Identity/Auth)'
+                    + '  </button>'
+                    + '</div>'
+                    + '<div class="bulk-apply-sensitive-section" id="sensitiveSection" style="display:none;background:#fef2f2;border:1px solid #fecaca;border-radius:4px;padding:8px;margin-top:4px;">'
+                    + '  <div style="color:#b91c1c;font-size:0.8em;margin-bottom:8px;">These fields contain account credentials. Use with caution.</div>';
+                sensitiveSections.sort((a, b) => a.order - b.order).forEach(section => {
+                    const safeId = escapeHtml(section.id);
+                    const checkboxId = 'section' + capitalize(safeId);
+                    html += '<label title="' + escapeHtml(section.description || '') + '">'
+                        + '  <input type="checkbox" id="' + checkboxId + '" data-section-id="' + safeId + '">'
+                        + '  <span>' + escapeHtml(section.label) + '</span>'
+                        + '</label>';
+                });
+                html += '</div>';
+            }
+        } else {
+            // Fallback to hardcoded sections
+            html += '<label><input type="checkbox" id="sectionHealth"><span>Health settings</span></label>'
+                + '<label><input type="checkbox" id="sectionMerc"><span>Merc settings</span></label>'
+                + '<label><input type="checkbox" id="sectionRuns"><span>Run settings</span></label>'
+                + '<label><input type="checkbox" id="sectionPacketCasting"><span>Using Packets</span></label>'
+                + '<label><input type="checkbox" id="sectionCubeRecipes"><span>Cube recipes</span></label>'
+                + '<label><input type="checkbox" id="sectionGeneral"><span>General settings</span></label>'
+                + '<div class="bulk-apply-advanced-divider" style="width:100%;text-align:left;font-size:0.8em;color:#6b7280;margin:8px 0 4px 0;padding-top:8px;border-top:1px solid #e5e7eb;">Advanced</div>'
+                + '<label><input type="checkbox" id="sectionInventory"><span>Inventory layout</span></label>'
+                + '<label><input type="checkbox" id="sectionCompanion"><span>Companion</span></label>'
+                + '<label><input type="checkbox" id="sectionGambling"><span>Gambling</span></label>'
+                + '<label><input type="checkbox" id="sectionBackToTown"><span>Back to town</span></label>'
+                + '<label><input type="checkbox" id="sectionClient"><span>Client settings</span></label>'
+                + '<label><input type="checkbox" id="sectionScheduler"><span>Scheduler settings</span></label>'
+                + '<label><input type="checkbox" id="sectionMuling"><span>Muling settings</span></label>'
+                + '<label><input type="checkbox" id="sectionShopping"><span>Shopping settings</span></label>';
+        }
+
+        html += '</div>'
             + '<div class="run-detail-toggles">'
             + '  <span class="run-detail-title">Run detail options to copy (optional):</span>'
             + '  <div class="run-detail-grid" id="runDetailGrid"></div>'
             + '</div>';
+
+        sectionContainer.innerHTML = html;
     }
 
-    sectionSelectAllCheckbox = document.getElementById('sectionSelectAll');
-    SECTION_CHECKBOX_IDS.forEach((id) => {
-        const cb = document.getElementById(id);
-        if (cb) {
-            cb.addEventListener('change', updateSectionSelectAllState);
-        }
-    });
-    if (sectionSelectAllCheckbox) {
-        sectionSelectAllCheckbox.addEventListener('change', function () {
-            const targetState = sectionSelectAllCheckbox.checked;
-            SECTION_CHECKBOX_IDS.forEach((id) => {
-                const checkbox = document.getElementById(id);
-                if (checkbox) {
-                    checkbox.checked = targetState;
-                    checkbox.dispatchEvent(new Event('change'));
-                }
-            });
-            sectionSelectAllCheckbox.indeterminate = false;
-            sectionSelectAllCheckbox.checked = targetState;
+    // Setup event listeners for section checkboxes
+    function setupSectionEventListeners() {
+        sectionSelectAllCheckbox = document.getElementById('sectionSelectAll');
+        const checkboxIds = getSectionCheckboxIds();
+        checkboxIds.forEach((id) => {
+            const cb = document.getElementById(id);
+            if (cb) {
+                cb.addEventListener('change', updateSectionSelectAllState);
+            }
         });
-        updateSectionSelectAllState();
+        if (sectionSelectAllCheckbox) {
+            sectionSelectAllCheckbox.addEventListener('change', function () {
+                const targetState = sectionSelectAllCheckbox.checked;
+                const ids = getSectionCheckboxIds();
+                ids.forEach((id) => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) {
+                        checkbox.checked = targetState;
+                        checkbox.dispatchEvent(new Event('change'));
+                    }
+                });
+                sectionSelectAllCheckbox.indeterminate = false;
+                sectionSelectAllCheckbox.checked = targetState;
+            });
+            updateSectionSelectAllState();
+        }
+
+        // Sensitive section toggle button
+        const showSensitiveBtn = document.getElementById('showSensitiveBtn');
+        const sensitiveSection = document.getElementById('sensitiveSection');
+        if (showSensitiveBtn && sensitiveSection) {
+            showSensitiveBtn.addEventListener('click', function() {
+                const isHidden = sensitiveSection.style.display === 'none';
+                sensitiveSection.style.display = isHidden ? 'block' : 'none';
+                showSensitiveBtn.textContent = isHidden ? 'Hide sensitive fields' : 'Show sensitive fields (Identity/Auth)';
+            });
+        }
     }
+
+    // Initial render with fallback (will be re-rendered when modal opens with API data)
+    renderSectionCheckboxes();
+    setupSectionEventListeners();
 
     const runDetailToggles = modal.querySelector('.run-detail-toggles');
     const runDetailGrid = modal.querySelector('#runDetailGrid');
@@ -889,31 +994,45 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getSectionsSelection() {
-        const healthCheckbox = document.getElementById('sectionHealth');
-        const mercCheckbox = document.getElementById('sectionMerc');
-        const runsCheckbox = document.getElementById('sectionRuns');
-        const packetCheckbox = document.getElementById('sectionPacketCasting');
-        const cubeCheckbox = document.getElementById('sectionCubeRecipes');
-        const runewordCheckbox = document.getElementById('sectionRunewordMaker');
-        const generalCheckbox = document.getElementById('sectionGeneral');
-        const clientCheckbox = document.getElementById('sectionClient');
-        const schedulerCheckbox = document.getElementById('sectionScheduler');
-        const mulingCheckbox = document.getElementById('sectionMuling');     // [Added]
-        const shoppingCheckbox = document.getElementById('sectionShopping'); // [Added]
+        const result = {};
 
-        return {
-            health: !!(healthCheckbox && healthCheckbox.checked),
-            merc: !!(mercCheckbox && mercCheckbox.checked),
-            runs: !!(runsCheckbox && runsCheckbox.checked),
-            packetCasting: !!(packetCheckbox && packetCheckbox.checked),
-            cubeRecipes: !!(cubeCheckbox && cubeCheckbox.checked),
-            runewordMaker: !!(runewordCheckbox && runewordCheckbox.checked),
-            general: !!(generalCheckbox && generalCheckbox.checked),
-            client: !!(clientCheckbox && clientCheckbox.checked),
-            scheduler: !!(schedulerCheckbox && schedulerCheckbox.checked),
-            muling: !!(mulingCheckbox && mulingCheckbox.checked),       // [Added]
-            shopping: !!(shoppingCheckbox && shoppingCheckbox.checked), // [Added]
-        };
+        if (sectionsLoaded && SECTION_DEFINITIONS.length > 0) {
+            // Dynamic: build result from API definitions
+            SECTION_DEFINITIONS.forEach(section => {
+                const checkboxId = 'section' + capitalize(section.id);
+                const checkbox = document.getElementById(checkboxId);
+                result[section.id] = !!(checkbox && checkbox.checked);
+            });
+        } else {
+            // Fallback: hardcoded section mapping
+            const healthCheckbox = document.getElementById('sectionHealth');
+            const mercCheckbox = document.getElementById('sectionMerc');
+            const runsCheckbox = document.getElementById('sectionRuns');
+            const packetCheckbox = document.getElementById('sectionPacketCasting');
+            const cubeCheckbox = document.getElementById('sectionCubeRecipes');
+            const runewordCheckbox = document.getElementById('sectionRunewordMaker');
+            const generalCheckbox = document.getElementById('sectionGeneral');
+            const generalExtrasCheckbox = document.getElementById('sectionGeneralExtras');
+            const clientCheckbox = document.getElementById('sectionClient');
+            const schedulerCheckbox = document.getElementById('sectionScheduler');
+            const mulingCheckbox = document.getElementById('sectionMuling');
+            const shoppingCheckbox = document.getElementById('sectionShopping');
+
+            result.health = !!(healthCheckbox && healthCheckbox.checked);
+            result.merc = !!(mercCheckbox && mercCheckbox.checked);
+            result.runs = !!(runsCheckbox && runsCheckbox.checked);
+            result.packetCasting = !!(packetCheckbox && packetCheckbox.checked);
+            result.cubeRecipes = !!(cubeCheckbox && cubeCheckbox.checked);
+            result.runewordMaker = !!(runewordCheckbox && runewordCheckbox.checked);
+            result.general = !!(generalCheckbox && generalCheckbox.checked);
+            result.generalExtras = !!(generalExtrasCheckbox && generalExtrasCheckbox.checked);
+            result.client = !!(clientCheckbox && clientCheckbox.checked);
+            result.scheduler = !!(schedulerCheckbox && schedulerCheckbox.checked);
+            result.muling = !!(mulingCheckbox && mulingCheckbox.checked);
+            result.shopping = !!(shoppingCheckbox && shoppingCheckbox.checked);
+        }
+
+        return result;
     }
 
     function collectRunDetailTargets() {

@@ -929,6 +929,7 @@ func (s *HttpServer) Listen(port int) error {
 	http.HandleFunc("/api/skill-options", s.skillOptionsAPI)
 
 	http.HandleFunc("/api/supervisors/bulk-apply", s.bulkApplyCharacterSettings)
+	http.HandleFunc("/api/supervisors/bulk-apply/sections", s.bulkApplySections)
 	http.HandleFunc("/api/scheduler-history", s.schedulerHistory)
 	http.HandleFunc("/Drop-manager", s.DropManagerPage)
 
@@ -3434,6 +3435,11 @@ func (s *HttpServer) bulkApplyCharacterSettings(w http.ResponseWriter, r *http.R
 		}
 	}
 
+	// Auto-include all run details when runs section is selected but no specific runs chosen
+	if req.Sections.Runs && len(req.RunDetailTargets) == 0 {
+		req.Sections.UpdateAllRunDetails = true
+	}
+
 	for name := range targets {
 		cfg, found := config.GetCharacter(name)
 		if !found || cfg == nil {
@@ -3447,7 +3453,6 @@ func (s *HttpServer) bulkApplyCharacterSettings(w http.ResponseWriter, r *http.R
 		// Ensure Identity, Muling, Shopping are NOT applied by default in Bulk Apply unless specified
 		// The client currently sends `ConfigUpdateOptions` which matches the JS struct.
 		// Muling/Shopping keys might be missing in JS struct, defaulting to false (which is safe).
-		// UpdateAllRunDetails is defaulted to false for Bulk Apply (desired).
 
 		if err := s.updateConfigFromForm(values, cfg, req.Sections, req.RunDetailTargets); err != nil {
 			s.logger.Error("failed to apply config", slog.String("supervisor", name), slog.Any("error", err))
@@ -3462,6 +3467,31 @@ func (s *HttpServer) bulkApplyCharacterSettings(w http.ResponseWriter, r *http.R
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{"success": true})
+}
+
+// bulkApplySections returns the available sections for bulk apply
+// Uses reflection-based discovery from struct tags in CharacterCfg
+func (s *HttpServer) bulkApplySections(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Use reflection-based discovery from config struct tags
+	sections := config.DiscoverBulkApplySections()
+
+	response := struct {
+		Sections                   []config.BulkApplySection `json:"sections"`
+		RunDetails                 []RunDetailDefinition     `json:"runDetails"`
+		RunDetailsIncludedWithRuns bool                      `json:"runDetailsIncludedWithRuns"`
+	}{
+		Sections:                   sections,
+		RunDetails:                 BulkApplyRunDetails,
+		RunDetailsIncludedWithRuns: true,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(response)
 }
 
 func (s *HttpServer) resetMuling(w http.ResponseWriter, r *http.Request) {

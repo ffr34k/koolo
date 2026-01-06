@@ -202,22 +202,23 @@ type AutoRespecConfig struct {
 }
 
 type CharacterCfg struct {
-	MaxGameLength        int    `yaml:"maxGameLength"`
-	Username             string `yaml:"username"`
-	Password             string `yaml:"password"`
-	AuthMethod           string `yaml:"authMethod"`
-	AuthToken            string `yaml:"authToken"`
-	Realm                string `yaml:"realm"`
-	CharacterName        string `yaml:"characterName"`
-	AutoCreateCharacter  bool   `yaml:"autoCreateCharacter"`
-	CommandLineArgs      string `yaml:"commandLineArgs"`
-	KillD2OnStop         bool   `yaml:"killD2OnStop"`
-	ClassicMode          bool   `yaml:"classicMode"`
-	UseCentralizedPickit bool   `yaml:"useCentralizedPickit"`
-	HidePortraits        bool   `yaml:"hidePortraits"`
-	AutoStart            bool   `yaml:"autoStart"`
+	MaxGameLength        int    `yaml:"maxGameLength" bulkapply:"section:general,label:General,desc:Core gameplay settings,order:7"`
+	Username             string `yaml:"username" bulkapply:"-"` // Never bulk apply - account credentials
+	Password             string `yaml:"password" bulkapply:"-"`
+	AuthMethod           string `yaml:"authMethod" bulkapply:"-"` // Never bulk apply - account credentials
+	AuthToken            string `yaml:"authToken" bulkapply:"-"`
+	Realm                string `yaml:"realm" bulkapply:"-"`                // Never bulk apply - account credentials
+	CharacterName        string `yaml:"characterName" bulkapply:"-"`        // Never bulk apply - unique per character
+	AutoCreateCharacter  bool   `yaml:"autoCreateCharacter" bulkapply:"-"` // Never bulk apply - account credentials
+	CommandLineArgs      string `yaml:"commandLineArgs" bulkapply:"section:client,label:Client,desc:D2R client options,order:9"`
+	KillD2OnStop         bool   `yaml:"killD2OnStop" bulkapply:"section:client"`
+	ClassicMode          bool   `yaml:"classicMode" bulkapply:"section:client"`
+	CloseMiniPanel       bool   `yaml:"closeMiniPanel" bulkapply:"section:client"`
+	UseCentralizedPickit bool   `yaml:"useCentralizedPickit" bulkapply:"section:general"`
+	HidePortraits        bool   `yaml:"hidePortraits" bulkapply:"section:client"`
+	AutoStart            bool   `yaml:"autoStart" bulkapply:"-"`
 
-	ConfigFolderName string `yaml:"-"`
+	ConfigFolderName string `yaml:"-" bulkapply:"-"`
 
 	PacketCasting struct {
 		UseForEntranceInteraction bool `yaml:"useForEntranceInteraction"`
@@ -226,9 +227,9 @@ type CharacterCfg struct {
 		UseForTeleport            bool `yaml:"useForTeleport"`
 		UseForEntitySkills        bool `yaml:"useForEntitySkills"`
 		UseForSkillSelection      bool `yaml:"useForSkillSelection"`
-	} `yaml:"packetCasting"`
+	} `yaml:"packetCasting" bulkapply:"section:packetCasting,label:Using Packets,desc:Packet casting options,order:4"`
 
-	Scheduler Scheduler `yaml:"scheduler"`
+	Scheduler Scheduler `yaml:"scheduler" bulkapply:"section:scheduler,label:Scheduler,desc:Automatic scheduling,order:10"`
 	Health    struct {
 		HealingPotionAt     int `yaml:"healingPotionAt"`
 		ManaPotionAt        int `yaml:"manaPotionAt"`
@@ -239,13 +240,13 @@ type CharacterCfg struct {
 		ChickenAt           int `yaml:"chickenAt"`
 		TownChickenAt       int `yaml:"townChickenAt"`
 		MercChickenAt       int `yaml:"mercChickenAt"`
-	} `yaml:"health"`
+	} `yaml:"health" bulkapply:"section:health,label:Health settings,desc:Potion thresholds and chicken,order:1"`
 	ChickenOnCurses struct {
 		AmplifyDamage bool `yaml:"amplifyDamage"`
 		Decrepify     bool `yaml:"decrepify"`
 		LowerResist   bool `yaml:"lowerResist"`
 		BloodMana     bool `yaml:"bloodMana"`
-	} `yaml:"chickenOnCurses"`
+	} `yaml:"chickenOnCurses" bulkapply:"section:health"`
 	ChickenOnAuras struct {
 		Fanaticism bool `yaml:"fanaticism"`
 		Might      bool `yaml:"might"`
@@ -254,14 +255,14 @@ type CharacterCfg struct {
 		BlessedAim bool `yaml:"blessedAim"`
 		HolyFreeze bool `yaml:"holyFreeze"`
 		HolyShock  bool `yaml:"holyShock"`
-	} `yaml:"chickenOnAuras"`
+	} `yaml:"chickenOnAuras" bulkapply:"section:health"`
 	Inventory struct {
 		InventoryLock      [][]int     `yaml:"inventoryLock"`
 		BeltColumns        BeltColumns `yaml:"beltColumns"`
 		HealingPotionCount int         `yaml:"healingPotionCount"`
 		ManaPotionCount    int         `yaml:"manaPotionCount"`
 		RejuvPotionCount   int         `yaml:"rejuvPotionCount"`
-	} `yaml:"inventory"`
+	} `yaml:"inventory" bulkapply:"section:inventory,label:Inventory layout,desc:Inventory and belt settings,category:advanced,order:20"`
 	Character struct {
 		Class                        string              `yaml:"class"`
 		UseMerc                      bool                `yaml:"useMerc"`
@@ -370,7 +371,7 @@ type CharacterCfg struct {
 			HorkMonsterCheckRange       int  `yaml:"hork_monster_check_range"`
 			UsePacketLearning           bool `yaml:"use_packet_learning"`
 		} `yaml:"warcry_barb"`
-	} `yaml:"character"`
+	} `yaml:"character" bulkapply:"section:merc,label:Character/Merc,desc:Merc and character options,order:2"`
 
 	Game struct {
 		MinGoldPickupThreshold  int                   `yaml:"minGoldPickupThreshold"`
@@ -518,7 +519,7 @@ type CharacterCfg struct {
 		// RunewordOverrides and RunewordRerollRules are keyed by the display name shown in the UI.
 		RunewordOverrides   map[string]RunewordOverrideConfig `yaml:"runewordOverrides,omitempty"`
 		RunewordRerollRules map[string][]RunewordRerollRule   `yaml:"runewordRerollRules,omitempty"`
-	} `yaml:"game"`
+	} `yaml:"game" bulkapply:"section:runs,label:Run settings,desc:Enabled runs and run details,order:3"`
 	Companion struct {
 		Enabled               bool   `yaml:"enabled"`
 		Leader                bool   `yaml:"leader"`
@@ -527,20 +528,20 @@ type CharacterCfg struct {
 		GamePassword          string `yaml:"gamePassword"`
 		CompanionGameName     string `yaml:"companionGameName"`
 		CompanionGamePassword string `yaml:"companionGamePassword"`
-	} `yaml:"companion"`
+	} `yaml:"companion" bulkapply:"section:companion,label:Companion,desc:Companion/party settings,category:advanced,order:21"`
 	Gambling struct {
-		Enabled bool     `yaml:"enabled"`
-		Items   []string `yaml:"items,omitempty"`
-	} `yaml:"gambling"`
+		Enabled bool        `yaml:"enabled"`
+		Items   []item.Name `yaml:"items"`
+	} `yaml:"gambling" bulkapply:"section:gambling,label:Gambling,desc:Gambling settings,category:advanced,order:22"`
 	Muling struct {
 		Enabled      bool     `yaml:"enabled"`
 		SwitchToMule string   `yaml:"switchToMule"`
 		ReturnTo     string   `yaml:"returnTo"`
 		MuleProfiles []string `yaml:"muleProfiles"`
-	} `yaml:"muling"`
+	} `yaml:"muling" bulkapply:"section:muling,label:Muling,desc:Mule character settings,order:11"`
 	MulingState struct {
 		CurrentMuleIndex int `yaml:"currentMuleIndex"`
-	} `yaml:"mulingState"`
+	} `yaml:"mulingState" bulkapply:"-"`
 	CubeRecipes struct {
 		Enabled              bool     `yaml:"enabled"`
 		EnabledRecipes       []string `yaml:"enabledRecipes"`
@@ -548,19 +549,19 @@ type CharacterCfg struct {
 		SkipPerfectRubies    bool     `yaml:"skipPerfectRubies"`
 		JewelsToKeep         int      `yaml:"jewelsToKeep"` // new field: number of magic jewels to keep
 		PrioritizeRunewords  bool     `yaml:"prioritizeRunewords"`
-	} `yaml:"cubing"`
+	} `yaml:"cubing" bulkapply:"section:cubeRecipes,label:Cube recipes,desc:Horadric cube recipe settings,order:5"`
 	BackToTown struct {
 		NoHpPotions     bool `yaml:"noHpPotions"`
 		NoMpPotions     bool `yaml:"noMpPotions"`
 		MercDied        bool `yaml:"mercDied"`
 		EquipmentBroken bool `yaml:"equipmentBroken"`
-	} `yaml:"backtotown"`
-	Shopping ShoppingConfig `yaml:"shopping"`
+	} `yaml:"backtotown" bulkapply:"section:backToTown,label:Back to town,desc:Town return triggers,category:advanced,order:23"`
+	Shopping ShoppingConfig `yaml:"shopping" bulkapply:"section:shopping,label:Shopping,desc:NPC shopping behavior,order:12"`
 	Runtime  struct {
 		Rules     nip.Rules   `yaml:"-"`
 		TierRules []int       `yaml:"-"`
 		Drops     []data.Item `yaml:"-"`
-	} `yaml:"-"`
+	} `yaml:"-" bulkapply:"-"`
 }
 
 type BeltColumns [4]string
