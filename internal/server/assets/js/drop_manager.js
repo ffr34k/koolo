@@ -1095,7 +1095,24 @@ document.addEventListener("DOMContentLoaded", () => {
   bind("dm-open-queue", "click", () => { State.queueModalOpen = true; UI.renderQueue(); $.get("dm-queue-modal").style.display = "flex"; });
   bind("dm-queue-close", "click", () => { State.queueModalOpen = false; $.get("dm-queue-modal").style.display = "none"; });
   bind("dm-queue-clear", "click", () => { State.queueArchive = []; UI.renderQueue(); });
-  bind("dm-history-clear", "click", () => { State.historyCache = []; State.saveHistory(); UI.renderHistory(); });
+  bind("dm-history-clear", "click", async () => {
+    // Clear server-side history first
+    try {
+      const res = await fetch("/api/Drop/history/clear", { method: "POST" });
+      if (!res.ok) {
+        console.error("Server returned error clearing history:", res.status);
+        alert("Failed to clear history on server. Please try again.");
+        return;
+      }
+      // Only clear client-side history if server succeeded
+      State.historyCache = [];
+      State.saveHistory();
+      UI.renderHistory();
+    } catch (e) {
+      console.error("Failed to clear server history:", e);
+      alert("Failed to clear history: " + e.message);
+    }
+  });
   
   bind("dm-card-filter-close", "click", () => $.get("dm-card-filter-modal").style.display = "none");
   bind("dm-card-filter-save", "click", Handlers.saveFilter);

@@ -226,6 +226,38 @@ func (m *Manager) DropFiltersEnabled() bool {
 	return m.filters.DropFiltersEnabled()
 }
 
+// UsePickitEnabled reports whether pickit-based drop mode is enabled.
+func (m *Manager) UsePickitEnabled() bool {
+	if m == nil || m.filters == nil {
+		return false
+	}
+	return m.filters.UsePickitEnabled()
+}
+
+// DropGemsEnabled reports whether gems can be dropped (default false = protected).
+func (m *Manager) DropGemsEnabled() bool {
+	if m == nil || m.filters == nil {
+		return false
+	}
+	return m.filters.DropGemsEnabled()
+}
+
+// DropJewelsEnabled reports whether jewels can be dropped (default false = protected).
+func (m *Manager) DropJewelsEnabled() bool {
+	if m == nil || m.filters == nil {
+		return false
+	}
+	return m.filters.DropJewelsEnabled()
+}
+
+// GetDropLocation returns the configured drop location (town), defaulting to "act1".
+func (m *Manager) GetDropLocation() string {
+	if m == nil || m.filters == nil {
+		return "act1"
+	}
+	return m.filters.GetDropLocation()
+}
+
 // GetDropItemQuantity returns the configured max Drop quantity for the given item.
 func (m *Manager) GetDropItemQuantity(itemName string) int {
 	if m == nil || m.filters == nil {

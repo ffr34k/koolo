@@ -111,9 +111,11 @@ func (gm *Manager) NewGame() error {
 }
 
 func (gm *Manager) clearGameNameOrPasswordField() {
-	for range 16 {
-		gm.hid.PressKey(win.VK_BACK)
-	}
+	// Select all with Ctrl+A, then delete
+	gm.hid.PressKeyWithModifier('A', CtrlKey)
+	utils.Sleep(50)
+	gm.hid.PressKey(win.VK_DELETE)
+	utils.Sleep(50)
 }
 
 func (gm *Manager) CreateLobbyGame(gameCounter int) (string, error) {
@@ -172,13 +174,87 @@ func (gm *Manager) CreateLobbyGame(gameCounter int) (string, error) {
 	return gameName, errors.New("error creating game! Timeout")
 }
 
+// JoinOnlineGame attempts to join a game with retry logic and exponential backoff.
+// It will retry up to maxRetries times (default 5), with backoff intervals calculated
+// to fit within maxBackoffTime (default 60 seconds).
 func (gm *Manager) JoinOnlineGame(gameName, password string) error {
+	const maxRetries = 5
+	const maxBackoffTime = 60 * time.Second
 
+	// Calculate exponential backoff intervals to fit within maxBackoffTime
+	// For 5 retries: ~2s, 4s, 8s, 16s, 30s = 60s total
+	backoffs := calculateBackoffIntervals(maxRetries, maxBackoffTime)
+
+	var lastErr error
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			// Wait with exponential backoff before retrying
+			time.Sleep(backoffs[attempt-1])
+		}
+
+		err := gm.attemptJoinGame(gameName, password)
+		if err == nil {
+			return nil
+		}
+		lastErr = err
+	}
+
+	return fmt.Errorf("failed to join game after %d attempts: %w", maxRetries, lastErr)
+}
+
+// calculateBackoffIntervals generates exponential backoff intervals that sum to maxTime.
+// Returns slice of durations for each retry wait.
+func calculateBackoffIntervals(retries int, maxTime time.Duration) []time.Duration {
+	// Edge case: no retries needed
+	if retries <= 0 {
+		return []time.Duration{}
+	}
+
+	// Edge case: single retry
+	if retries == 1 {
+		if maxTime < time.Second {
+			return []time.Duration{time.Second}
+		}
+		return []time.Duration{maxTime}
+	}
+
+	// Edge case: invalid maxTime, use minimum 1s per interval
+	if maxTime <= 0 {
+		intervals := make([]time.Duration, retries-1)
+		for i := range intervals {
+			intervals[i] = time.Second
+		}
+		return intervals
+	}
+
+	// Calculate weights: 1, 2, 4, 8, ... (exponential)
+	weights := make([]float64, retries-1)
+	totalWeight := 0.0
+	for i := range weights {
+		weights[i] = float64(int(1) << i) // 2^i
+		totalWeight += weights[i]
+	}
+
+	// Scale weights to fit within maxTime
+	intervals := make([]time.Duration, retries-1)
+	for i, w := range weights {
+		intervals[i] = time.Duration(float64(maxTime) * w / totalWeight)
+		// Minimum 1 second per interval
+		if intervals[i] < time.Second {
+			intervals[i] = time.Second
+		}
+	}
+
+	return intervals
+}
+
+// attemptJoinGame performs a single attempt to join an online game.
+func (gm *Manager) attemptJoinGame(gameName, password string) error {
 	// Click "Join game" tab
 	gm.hid.Click(LeftButton, 977, 54)
 	utils.Sleep(200)
 
-	// Click the game name textbox, delete text and type new game name
+	// Click the game name textbox, clear and type game name
 	gm.hid.Click(LeftButton, 950, 100)
 	utils.Sleep(200)
 	gm.clearGameNameOrPasswordField()
@@ -187,7 +263,7 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 		gm.hid.PressKey(gm.hid.GetASCIICode(fmt.Sprintf("%c", ch)))
 	}
 
-	// Same for password
+	// Click the password textbox, clear and type password
 	gm.hid.Click(LeftButton, 1130, 100)
 	utils.Sleep(200)
 	gm.clearGameNameOrPasswordField()
@@ -197,6 +273,7 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 	}
 	gm.hid.PressKey(win.VK_RETURN)
 
+	// Wait up to 15 seconds for game entry
 	for range 15 {
 		if gm.gr.InGame() {
 			return nil
@@ -208,11 +285,11 @@ func (gm *Manager) JoinOnlineGame(gameName, password string) error {
 		if panel.PanelName != "" && panel.PanelEnabled && panel.PanelVisible {
 			gm.hid.PressKey(win.VK_ESCAPE)
 			utils.Sleep(1000)
-			return errors.New("error joining game! Got error message")
+			return errors.New("error joining game: got error message")
 		}
 	}
 
-	return errors.New("error joining game! Timeout")
+	return errors.New("error joining game: timeout")
 }
 
 func (gm *Manager) InGame() bool {

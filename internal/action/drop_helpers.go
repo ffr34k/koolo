@@ -20,11 +20,13 @@ func IsDropProtected(i data.Item) bool {
 	selected := false
 	DropperOnly := false
 	filtersEnabled := false
+	usePickit := false
 
 	if ctx != nil && ctx.Context != nil {
 		if ctx.Context.Drop != nil {
 			filtersEnabled = ctx.Context.Drop.DropFiltersEnabled()
-			if filtersEnabled {
+			usePickit = ctx.Context.Drop.UsePickitEnabled()
+			if filtersEnabled && !usePickit {
 				selected = ctx.Context.Drop.ShouldDropperItem(string(i.Name), i.Quality, i.Type().Code, i.IsRuneword)
 				DropperOnly = ctx.Context.Drop.DropperOnlySelected()
 			}
@@ -38,6 +40,46 @@ func IsDropProtected(i data.Item) bool {
 
 	// Protect runeword reroll targets (and their temporary bases) from Drop.
 	if shouldProtectRunewordReroll(ctx, i) {
+		return true
+	}
+
+	// UsePickit mode: drop items that MATCH pickit rules (good items)
+	if usePickit {
+		// Always protect essential consumables - bot needs these to function
+		if isEssentialConsumable(i) {
+			return true
+		}
+
+		// Keep recipe materials first
+		if shouldKeepRecipeItem(i) {
+			return true
+		}
+
+		// Check if item matches pickit rules
+		if MatchesPickitRules(i) {
+			// Item matches pickit - check category toggles to see if we can drop it
+			// Default to protecting gems/jewels if we can't check the toggles
+			dropMgr := ctx.Context.Drop
+			if dropMgr == nil {
+				// Can't check toggles, protect the item to be safe
+				return true
+			}
+
+			// Gems: protected by default, drop only if DropGems is enabled
+			if isGemItem(i) && !dropMgr.DropGemsEnabled() {
+				return true // protected
+			}
+			// Jewels: protected by default, drop only if DropJewels is enabled
+			if i.Name == "Jewel" && !dropMgr.DropJewelsEnabled() {
+				return true // protected
+			}
+			// Charms: no special protection - skillers match pickit and get dropped,
+			// reroll candidates don't match pickit and are already protected below
+
+			// Item matches pickit and isn't in a protected category - drop it
+			return false
+		}
+		// Item doesn't match pickit - protect it (don't drop)
 		return true
 	}
 
@@ -260,3 +302,49 @@ func HasGrandCharmRerollCandidate(ctx *context.Status) bool {
 	return ok
 }
 
+// isGemItem checks if an item is any type of gem (any tier, not just perfect)
+func isGemItem(i data.Item) bool {
+	itemType := strings.ToLower(i.Type().Code)
+	gemTypes := []string{
+		strings.ToLower(item.TypeAmethyst),
+		strings.ToLower(item.TypeDiamond),
+		strings.ToLower(item.TypeEmerald),
+		strings.ToLower(item.TypeRuby),
+		strings.ToLower(item.TypeSapphire),
+		strings.ToLower(item.TypeTopaz),
+		strings.ToLower(item.TypeSkull),
+	}
+	for _, gemType := range gemTypes {
+		if itemType == gemType {
+			return true
+		}
+	}
+	return false
+}
+
+// isEssentialConsumable checks if an item is essential for bot operation (tomes, keys, potions)
+func isEssentialConsumable(i data.Item) bool {
+	name := string(i.Name)
+
+	// Tomes - bot needs these
+	if name == "TomeOfTownPortal" || name == "TomeOfIdentify" {
+		return true
+	}
+
+	// Regular keys for locked chests (NOT uber keys)
+	if name == "Key" {
+		return true
+	}
+
+	// Potions - bot needs these to survive
+	if strings.Contains(name, "Potion") || strings.Contains(name, "potion") {
+		return true
+	}
+
+	// Scrolls
+	if name == "ScrollOfTownPortal" || name == "ScrollOfIdentify" {
+		return true
+	}
+
+	return false
+}
