@@ -624,11 +624,13 @@ func Load() error {
 	if err = d.Decode(&Koolo); err != nil {
 		return fmt.Errorf("error reading config %s: %w", kooloPath, err)
 	}
+	configDir := getAbsPath("config")
 	if Koolo != nil {
 		sanitizeDiscordConfig(Koolo)
+		// Resolve relative paths against config directory
+		Koolo.D2RPath = resolveConfigPath(Koolo.D2RPath, configDir)
+		Koolo.CentralizedPickitPath = resolveConfigPath(Koolo.CentralizedPickitPath, configDir)
 	}
-
-	configDir := getAbsPath("config")
 	entries, err := os.ReadDir(configDir)
 	if err != nil {
 		return fmt.Errorf("error reading config directory %s: %w", configDir, err)
@@ -830,11 +832,16 @@ func ValidateAndSaveConfig(config KooloCfg) error {
 	config.D2LoDPath = strings.ReplaceAll(strings.ToLower(config.D2LoDPath), "game.exe", "")
 	config.D2RPath = strings.ReplaceAll(strings.ToLower(config.D2RPath), "d2r.exe", "")
 
-	if _, err := os.Stat(config.D2LoDPath + "/d2data.mpq"); os.IsNotExist(err) {
+	// Resolve paths for validation (but save original values to preserve relative paths)
+	configDir := getAbsPath("config")
+	resolvedD2LoDPath := resolveConfigPath(config.D2LoDPath, configDir)
+	resolvedD2RPath := resolveConfigPath(config.D2RPath, configDir)
+
+	if _, err := os.Stat(filepath.Join(resolvedD2LoDPath, "d2data.mpq")); os.IsNotExist(err) {
 		return errors.New("D2LoDPath is not valid")
 	}
 
-	if _, err := os.Stat(config.D2RPath + "/d2r.exe"); os.IsNotExist(err) {
+	if _, err := os.Stat(filepath.Join(resolvedD2RPath, "d2r.exe")); os.IsNotExist(err) {
 		return errors.New("D2RPath is not valid")
 	}
 
@@ -909,6 +916,19 @@ func getAbsPath(relPath string) string {
 		return relPath
 	}
 	return filepath.Join(cwd, relPath)
+}
+
+// resolveConfigPath resolves a path relative to the config directory.
+// Absolute paths are returned as-is. Empty paths return empty.
+func resolveConfigPath(path string, configDir string) string {
+	if path == "" {
+		return ""
+	}
+	path = filepath.Clean(path)
+	if filepath.IsAbs(path) {
+		return path
+	}
+	return filepath.Join(configDir, path)
 }
 
 func getLevelingNipFiles(charCfg *CharacterCfg, entryName string) []string {
