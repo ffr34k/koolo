@@ -115,6 +115,39 @@
                         <p style="margin:0.25rem 0 0 1.75rem; color:var(--text-sub); font-size:0.9rem;">Prevents any drop request that does not carry an enabled filter.</p>
                     </label>
                 </div>
+                <div class="drop-mode-option" style="margin-top:0.8rem;">
+                    <label>
+                        <input type="radio" name="dm-drop-mode-option" value="use-pickit">
+                        <strong>Use Pickit rules (drop valuable items).</strong>
+                        <p style="margin:0.25rem 0 0 1.75rem; color:var(--text-sub); font-size:0.9rem;">Drop items that match your pickit NIP rules (skillers, runes, uniques, etc). Protects consumables, reroll candidates, and optionally gems/jewels.</p>
+                    </label>
+                </div>
+                <div style="margin-top:1rem; padding:1rem; background:var(--bg-secondary); border-radius:6px;">
+                    <h4 style="margin:0 0 0.75rem 0; font-size:0.95rem;">Drop Settings</h4>
+                    <div style="display:flex; align-items:center; gap:0.5rem;">
+                        <label for="dm-drop-location" style="min-width:100px;">Drop Location:</label>
+                        <select id="dm-drop-location" style="padding:0.25rem 0.5rem; border-radius:4px; border:1px solid var(--border-color);">
+                            <option value="act1">Act 1 Town</option>
+                            <option value="act2">Act 2 Town</option>
+                            <option value="act3">Act 3 Town</option>
+                            <option value="act4">Act 4 Town</option>
+                            <option value="act5">Act 5 Town</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="dm-pickit-options" style="margin-top:1rem; padding:1rem; background:var(--bg-secondary); border-radius:6px; display:none;">
+                    <h4 style="margin:0 0 0.75rem 0; font-size:0.95rem;">Pickit Mode Options</h4>
+                    <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                            <input type="checkbox" id="dm-drop-gems">
+                            <span>Allow dropping gems (protected by default)</span>
+                        </label>
+                        <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                            <input type="checkbox" id="dm-drop-jewels">
+                            <span>Allow dropping jewels (protected by default)</span>
+                        </label>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

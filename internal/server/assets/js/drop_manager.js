@@ -36,11 +36,20 @@ const CONFIG = {
 
 const DROP_MODES = {
   ALL_EXCEPT_MATERIALS: "drop-except-materials",
-  REQUIRE_FILTER: "require-filter"
+  REQUIRE_FILTER: "require-filter",
+  USE_PICKIT: "use-pickit"
 };
+
+const VALID_DROP_LOCATIONS = ["act1", "act2", "act3", "act4", "act5"];
+const DEFAULT_DROP_LOCATION = "act1";
 
 const DropPreferences = {
   KEY: "DropManager.dropMode",
+  PICKIT_KEYS: {
+    LOCATION: "DropManager.pickitLocation",
+    DROP_GEMS: "DropManager.pickitDropGems",
+    DROP_JEWELS: "DropManager.pickitDropJewels"
+  },
   currentMode: DROP_MODES.ALL_EXCEPT_MATERIALS,
   promptKey: "DropManager.dropModePrompted",
 
@@ -50,6 +59,23 @@ const DropPreferences = {
       this.currentMode = stored;
     }
     this.syncUI();
+    this.setupPickitToggle();
+  },
+
+  setupPickitToggle() {
+    if (this._pickitToggleSetup) return; // Prevent duplicate listeners
+    this._pickitToggleSetup = true;
+    document.querySelectorAll('input[name="dm-drop-mode-option"]').forEach(radio => {
+      radio.addEventListener("change", () => this.togglePickitOptions());
+    });
+  },
+
+  togglePickitOptions() {
+    const pickitPanel = document.getElementById("dm-pickit-options");
+    const pickitRadio = document.querySelector('input[name="dm-drop-mode-option"][value="use-pickit"]');
+    if (pickitPanel && pickitRadio) {
+      pickitPanel.style.display = pickitRadio.checked ? "block" : "none";
+    }
   },
 
   set(mode) {
@@ -57,6 +83,25 @@ const DropPreferences = {
     this.currentMode = mode;
     localStorage.setItem(this.KEY, mode);
     localStorage.setItem(this.promptKey, "1");
+
+    // Always save drop location (applies to all modes)
+    const locationEl = document.getElementById("dm-drop-location");
+    if (locationEl) {
+      const location = locationEl.value;
+      localStorage.setItem(this.PICKIT_KEYS.LOCATION, VALID_DROP_LOCATIONS.includes(location) ? location : DEFAULT_DROP_LOCATION);
+    }
+
+    // Save pickit-specific options only in pickit mode
+    if (mode === DROP_MODES.USE_PICKIT) {
+      const gemsEl = document.getElementById("dm-drop-gems");
+      const jewelsEl = document.getElementById("dm-drop-jewels");
+
+      if (gemsEl && jewelsEl) {
+        localStorage.setItem(this.PICKIT_KEYS.DROP_GEMS, gemsEl.checked);
+        localStorage.setItem(this.PICKIT_KEYS.DROP_JEWELS, jewelsEl.checked);
+      }
+    }
+
     this.syncUI();
   },
 
@@ -65,6 +110,24 @@ const DropPreferences = {
     if (radio) {
       radio.checked = true;
     }
+
+    // Sync pickit options
+    const locationSelect = document.getElementById("dm-drop-location");
+    const dropGemsCheck = document.getElementById("dm-drop-gems");
+    const dropJewelsCheck = document.getElementById("dm-drop-jewels");
+
+    if (locationSelect) {
+      const storedLocation = localStorage.getItem(this.PICKIT_KEYS.LOCATION);
+      locationSelect.value = VALID_DROP_LOCATIONS.includes(storedLocation) ? storedLocation : DEFAULT_DROP_LOCATION;
+    }
+    if (dropGemsCheck) {
+      dropGemsCheck.checked = localStorage.getItem(this.PICKIT_KEYS.DROP_GEMS) === "true";
+    }
+    if (dropJewelsCheck) {
+      dropJewelsCheck.checked = localStorage.getItem(this.PICKIT_KEYS.DROP_JEWELS) === "true";
+    }
+
+    this.togglePickitOptions();
     this.updateButtonState();
   },
 
@@ -72,20 +135,41 @@ const DropPreferences = {
     return this.currentMode === DROP_MODES.REQUIRE_FILTER;
   },
 
+  usePickit() {
+    return this.currentMode === DROP_MODES.USE_PICKIT;
+  },
+
+  getDropLocation() {
+    const storedLocation = localStorage.getItem(this.PICKIT_KEYS.LOCATION);
+    return VALID_DROP_LOCATIONS.includes(storedLocation) ? storedLocation : DEFAULT_DROP_LOCATION;
+  },
+
+  getPickitOptions() {
+    return {
+      usePickit: this.usePickit(),
+      dropLocation: this.getDropLocation(),
+      dropGems: localStorage.getItem(this.PICKIT_KEYS.DROP_GEMS) === "true",
+      dropJewels: localStorage.getItem(this.PICKIT_KEYS.DROP_JEWELS) === "true"
+    };
+  },
+
   updateButtonState() {
-    const btn = $.get("dm-drop-mode-settings");
+    const btn = document.getElementById("dm-drop-mode-settings");
     if (!btn) return;
     if (this.requireFilter()) {
-      btn.classList.remove("btn-danger");
+      btn.classList.remove("btn-danger", "btn-success");
       btn.classList.add("btn-outline");
       btn.title = "Filter required mode active";
+    } else if (this.usePickit()) {
+      btn.classList.remove("btn-danger", "btn-outline");
+      btn.classList.add("btn-success");
+      btn.title = "Pickit mode active";
     } else {
-      btn.classList.remove("btn-outline");
+      btn.classList.remove("btn-outline", "btn-success");
       btn.classList.add("btn-danger");
       btn.title = "Standard mode active";
     }
-  }
-,
+  },
 
   maybePromptInitialMode() {
     if (localStorage.getItem(this.KEY)) return;
@@ -819,7 +903,7 @@ const UI = {
         const displayName = formatItemName(item.name);
         
         createChip(`${displayName} ${qtyText}`, () => {
-            const cb = document.querySelector(`input[value="${item.name}"]`);
+            const cb = document.querySelector(`input[value="${CSS.escape(item.name)}"]`);
             if(cb) { cb.checked = false; cb.dispatchEvent(new Event('change', {bubbles:true})); }
         });
     });
@@ -882,12 +966,34 @@ const Handlers = {
     if (!supervisors.length) return $.toast("Select a supervisor", "error");
     const room = $.val("dm-room");
     if (!room) return $.toast("Room required", "error");
-    
+
     localStorage.setItem(CONFIG.KEYS.ROOM, room);
     const pwd = $.val("dm-password");
     localStorage.setItem(CONFIG.KEYS.PASSWORD, pwd);
 
-    API.batchDrop({ supervisors, room, password: pwd, delaySeconds: Number($.val("dm-delay")) || 15 })
+    const payload = { supervisors, room, password: pwd, delaySeconds: Number($.val("dm-delay")) || 15 };
+
+    // Always include drop location in filter
+    payload.filter = {
+      dropLocation: DropPreferences.getDropLocation(),
+      selectedRunes: [],
+      selectedGems: [],
+      selectedKeyTokens: [],
+      allowedQualities: [],
+      customItems: []
+    };
+
+    // Add pickit-specific options if pickit mode is enabled
+    if (DropPreferences.usePickit()) {
+      const pickitOpts = DropPreferences.getPickitOptions();
+      payload.filter.enabled = true;
+      payload.filter.DropperOnlySelected = true;
+      payload.filter.usePickit = true;
+      payload.filter.dropGems = pickitOpts.dropGems;
+      payload.filter.dropJewels = pickitOpts.dropJewels;
+    }
+
+    API.batchDrop(payload)
       .then(API.getStatus)
       .catch(e => $.toast(e.message, "error"));
   },
@@ -915,16 +1021,26 @@ requestCard(card) {
   UI.renderQueue();
 
   const filter = card.filter || State.defaultFilter();
-  
+
   const filterPayload = {
     enabled: !!filter.enabled,
     DropperOnlySelected: filter.DropperOnlySelected,
+    dropLocation: DropPreferences.getDropLocation(), // Always include drop location
     selectedRunes: filter.selectedRunes || [],
     selectedGems: filter.selectedGems || [],
     selectedKeyTokens: filter.selectedKeyTokens || [],
     allowedQualities: filter.allowedQualities || [],
     customItems: filter.customItems || []
   };
+
+  // Add pickit-specific options if pickit mode is enabled
+  if (DropPreferences.usePickit()) {
+    const pickitOpts = DropPreferences.getPickitOptions();
+    filterPayload.enabled = true;
+    filterPayload.usePickit = true;
+    filterPayload.dropGems = pickitOpts.dropGems;
+    filterPayload.dropJewels = pickitOpts.dropJewels;
+  }
 
   const online = card.supervisors.filter(n => 
     State.supervisors.find(s => s.name === n && s.running)
@@ -1034,9 +1150,32 @@ requestCard(card) {
     const room = $.val("dm-room");
     if (!room) return $.toast("Room required", "error");
     if (btn) btn.disabled = true;
-    API.startDropper(name, { room, password: $.val("dm-password") })
+
+    const body = { room, password: $.val("dm-password") };
+
+    // Always include drop location in filter
+    body.filter = {
+      dropLocation: DropPreferences.getDropLocation(),
+      selectedRunes: [],
+      selectedGems: [],
+      selectedKeyTokens: [],
+      allowedQualities: [],
+      customItems: []
+    };
+
+    // Add pickit-specific options if pickit mode is enabled
+    if (DropPreferences.usePickit()) {
+      const pickitOpts = DropPreferences.getPickitOptions();
+      body.filter.enabled = true;
+      body.filter.DropperOnlySelected = true;
+      body.filter.usePickit = true;
+      body.filter.dropGems = pickitOpts.dropGems;
+      body.filter.dropJewels = pickitOpts.dropJewels;
+    }
+
+    API.startDropper(name, body)
       .then(() => API.startSupervisor(name))
-      .then(() => setTimeout(API.getStatus, 5000)) 
+      .then(() => setTimeout(API.getStatus, 5000))
       .catch(e => $.toast(e.message, "error"))
       .finally(() => { if (btn) btn.disabled = false; });
   },

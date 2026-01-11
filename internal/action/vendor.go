@@ -1,6 +1,7 @@
 package action
 
 import (
+	"fmt"
 	"log/slog"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
@@ -21,7 +22,7 @@ import (
 type VendorRefillOpts struct {
 	ForceRefill    bool     // Force refill even if not needed
 	SellJunk       bool     // Sell junk items to vendor
-	BuyConsumables bool     // Buy potions, scrolls, keys (default behavior when not specified)
+	BuyConsumables bool     // Buy potions, scrolls, keys
 	LockConfig     [][]int  // Inventory slots to protect from selling
 }
 
@@ -57,34 +58,9 @@ func VendorRefill(opts VendorRefillOpts) (err error) {
 
 	ctx.Logger.Info("Visiting vendor...", slog.Bool("forceRefill", opts.ForceRefill))
 
-	vendorNPC := town.GetTownByArea(ctx.Data.PlayerUnit.Area).RefillNPC()
-	if vendorNPC == npc.Drognan {
-		_, needsBuy := town.ShouldBuyKeys()
-		if needsBuy && ctx.Data.PlayerUnit.Class != data.Assassin {
-			vendorNPC = npc.Lysander
-		}
-	}
-	if vendorNPC == npc.Ormus {
-		_, needsBuy := town.ShouldBuyKeys()
-		if needsBuy && ctx.Data.PlayerUnit.Class != data.Assassin {
-			if err := FindHratliEverywhere(); err != nil {
-				// If moveToHratli returns an error, it means a forced game quit is required.
-				return err
-			}
-			vendorNPC = npc.Hratli
-		}
-	}
-
-	err = InteractNPC(vendorNPC)
+	vendorNPC, err := OpenVendorTradeMenu(opts.BuyConsumables) // only consider key vendor switch if buying
 	if err != nil {
 		return err
-	}
-
-	// Jamella trade button is the first one
-	if vendorNPC == npc.Jamella {
-		ctx.HID.KeySequence(win.VK_HOME, win.VK_RETURN)
-	} else {
-		ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
 	}
 
 	if opts.SellJunk {
@@ -97,12 +73,58 @@ func VendorRefill(opts VendorRefillOpts) (err error) {
 	SwitchVendorTab(4)
 	ctx.RefreshGameData()
 
-	// Only buy consumables if requested (defaults to false, so explicit opt-in required)
 	if opts.BuyConsumables {
 		town.BuyConsumables(opts.ForceRefill)
 	}
 
+	_ = vendorNPC // used for logging if needed
 	return step.CloseAllMenus()
+}
+
+// OpenVendorTradeMenu opens the trade menu with the appropriate vendor for the current town.
+// If considerKeyVendor is true, it may switch to a different vendor if keys need to be bought.
+// Returns the vendor NPC that was used.
+func OpenVendorTradeMenu(considerKeyVendor bool) (npc.ID, error) {
+	ctx := botCtx.Get()
+
+	currentTown := town.GetTownByArea(ctx.Data.PlayerUnit.Area)
+	if currentTown == nil {
+		return 0, fmt.Errorf("not in a recognized town")
+	}
+
+	vendorNPC := currentTown.RefillNPC()
+
+	// Optionally switch to key-selling vendor if needed
+	if considerKeyVendor {
+		if vendorNPC == npc.Drognan {
+			_, needsBuy := town.ShouldBuyKeys()
+			if needsBuy && ctx.Data.PlayerUnit.Class != data.Assassin {
+				vendorNPC = npc.Lysander
+			}
+		}
+		if vendorNPC == npc.Ormus {
+			_, needsBuy := town.ShouldBuyKeys()
+			if needsBuy && ctx.Data.PlayerUnit.Class != data.Assassin {
+				if err := FindHratliEverywhere(); err != nil {
+					return 0, err
+				}
+				vendorNPC = npc.Hratli
+			}
+		}
+	}
+
+	if err := InteractNPC(vendorNPC); err != nil {
+		return 0, err
+	}
+
+	// Jamella (Act 4) trade button is the first one, others need DOWN
+	if vendorNPC == npc.Jamella {
+		ctx.HID.KeySequence(win.VK_HOME, win.VK_RETURN)
+	} else {
+		ctx.HID.KeySequence(win.VK_HOME, win.VK_DOWN, win.VK_RETURN)
+	}
+
+	return vendorNPC, nil
 }
 
 func BuyAtVendor(vendor npc.ID, items ...VendorItemRequest) error {

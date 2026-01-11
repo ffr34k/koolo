@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 
@@ -264,6 +265,103 @@ func baseMatchesRerollRule(itm data.Item, rule config.RunewordRerollRule) bool {
 	return true
 }
 
+// NavigateToDropTown navigates to the configured drop location town using waypoints.
+// If already in the correct town, does nothing. Retries up to 5 times with repositioning.
+func NavigateToDropTown() error {
+	ctx := context.Get()
+	if ctx == nil {
+		return fmt.Errorf("Drop: context is nil")
+	}
+	ctx.SetLastAction("NavigateToDropTown")
+
+	// Get the configured drop location
+	dropLoc := "act1" // default
+	if ctx.Context != nil && ctx.Context.Drop != nil {
+		dropLoc = ctx.Context.Drop.GetDropLocation()
+	}
+
+	// Map drop location string to area.ID
+	var targetTown area.ID
+	switch dropLoc {
+	case "act1":
+		targetTown = area.RogueEncampment
+	case "act2":
+		targetTown = area.LutGholein
+	case "act3":
+		targetTown = area.KurastDocks
+	case "act4":
+		targetTown = area.ThePandemoniumFortress
+	case "act5":
+		targetTown = area.Harrogath
+	default:
+		targetTown = area.RogueEncampment
+	}
+
+	// If already in the target town, nothing to do
+	if ctx.Data.PlayerUnit.Area == targetTown {
+		return nil
+	}
+
+	ctx.Logger.Info("Drop: Navigating to configured drop town", "location", dropLoc, "target", targetTown)
+
+	// Retry waypoint up to 5 times
+	const maxRetries = 5
+	var lastErr error
+
+	for attempt := 1; attempt <= maxRetries; attempt++ {
+		ctx.RefreshGameData()
+
+		// If we somehow ended up in the target town, we're done
+		if ctx.Data.PlayerUnit.Area == targetTown {
+			return nil
+		}
+
+		if attempt > 1 {
+			ctx.Logger.Debug("Drop: Retrying waypoint navigation", "attempt", attempt, "maxRetries", maxRetries)
+			// Move away from waypoint and back to reset state
+			if err := repositionForWaypointRetry(ctx); err != nil {
+				ctx.Logger.Debug("Drop: Reposition failed, continuing anyway", "error", err)
+			}
+		}
+
+		lastErr = WayPoint(targetTown)
+		if lastErr == nil {
+			ctx.RefreshGameData()
+			if ctx.Data.PlayerUnit.Area == targetTown {
+				return nil
+			}
+			// Waypoint returned success but we're not in target town - weird, retry
+			lastErr = fmt.Errorf("waypoint succeeded but not in target area")
+		}
+
+		ctx.Logger.Warn("Drop: Waypoint navigation failed", "attempt", attempt, "error", lastErr)
+	}
+
+	return fmt.Errorf("Drop: Waypoint not found - failed to navigate to %s after %d attempts: %w", dropLoc, maxRetries, lastErr)
+}
+
+// repositionForWaypointRetry moves the character slightly away and back to reset waypoint interaction state
+func repositionForWaypointRetry(ctx *context.Status) error {
+	if ctx == nil || ctx.Data.AreaData.Grid == nil {
+		return nil
+	}
+
+	// Get current position and move slightly away
+	currentPos := ctx.Data.PlayerUnit.Position
+	offsetPos := data.Position{
+		X: currentPos.X + 5,
+		Y: currentPos.Y + 5,
+	}
+
+	// Move away
+	if err := MoveToCoords(offsetPos); err != nil {
+		return err
+	}
+
+	// Move back
+	return MoveToCoords(currentPos)
+}
+
 func RunDropCleanup() error {
 	ctx := context.Get()
 
@@ -276,6 +374,14 @@ func RunDropCleanup() error {
 		// Update town/NPC data after the town portal sequence.
 		ctx.RefreshGameData()
 	}
+
+	// Navigate to the configured drop location town
+	if err := NavigateToDropTown(); err != nil {
+		ctx.Logger.Warn("Drop: failed to navigate to configured drop town, continuing in current town", "error", err)
+		// Continue anyway - dropping in current town is better than failing
+	}
+	ctx.RefreshGameData()
+
 	RecoverCorpse()
 
 	IdentifyAll(false)
