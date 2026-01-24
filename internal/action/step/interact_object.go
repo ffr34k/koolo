@@ -144,7 +144,9 @@ func InteractObjectMouse(obj data.Object, isCompletedFn func() bool) error {
 		}
 
 		if o.IsHovered && !utils.IsZeroPosition(currentMouseCoords) {
-			ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
+			if err := ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 
 			waitingForInteraction = true
 			interactionAttempts++

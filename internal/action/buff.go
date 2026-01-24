@@ -85,7 +85,9 @@ func Buff() {
 			utils.Sleep(100)
 			ctx.HID.PressKeyBinding(kb)
 			utils.Sleep(180)
-			ctx.HID.Click(game.RightButton, 640, 340)
+			if err := ctx.HID.Click(game.RightButton, 640, 340); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 			utils.Sleep(100)
 		}
 	}
@@ -122,7 +124,9 @@ func Buff() {
 			utils.Sleep(100)
 			ctx.HID.PressKeyBinding(kb)
 			utils.Sleep(180)
-			ctx.HID.Click(game.RightButton, 640, 340)
+			if err := ctx.HID.Click(game.RightButton, 640, 340); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 			utils.Sleep(100)
 		}
 
@@ -209,12 +213,16 @@ func buffCTA() {
 
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleCommand))
 		utils.Sleep(180)
-		ctx.HID.Click(game.RightButton, 300, 300)
+		if err := ctx.HID.Click(game.RightButton, 300, 300); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.Sleep(100)
 
 		ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.BattleOrders))
 		utils.Sleep(180)
-		ctx.HID.Click(game.RightButton, 300, 300)
+		if err := ctx.HID.Click(game.RightButton, 300, 300); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.Sleep(100)
 
 		utils.PingSleep(utils.Light, 400)

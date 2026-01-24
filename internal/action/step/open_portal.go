@@ -66,7 +66,9 @@ func OpenPortal() error {
 			} else if _, bindingFound := ctx.Data.KeyBindings.KeyBindingForSkill(skill.TomeOfTownPortal); bindingFound {
 				ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.MustKBForSkill(skill.TomeOfTownPortal))
 				utils.PingSleep(utils.Medium, 250) // Medium operation: Wait for tome activation
-				ctx.HID.Click(game.RightButton, 300, 300)
+				if err := ctx.HID.Click(game.RightButton, 300, 300); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 				usedKB = true
 			}
 		}
@@ -79,7 +81,9 @@ func OpenPortal() error {
 		if !usedKB && tpItemFound {
 			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.Inventory)
 			screenPos := ui.GetScreenCoordsForItem(tpItem)
-			ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+			if err := ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 			CloseAllMenus()
 		}
 

@@ -32,6 +32,7 @@ import (
 	"github.com/hectorgimenez/d2go/pkg/data"
 	"github.com/hectorgimenez/d2go/pkg/data/area"
 	"github.com/hectorgimenez/d2go/pkg/data/difficulty"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/d2go/pkg/data/skill"
 	"github.com/hectorgimenez/d2go/pkg/data/stat"
 	"github.com/hectorgimenez/koolo/internal/bot"
@@ -1896,15 +1897,15 @@ func (s *HttpServer) updateConfigFromForm(values url.Values, cfg *config.Charact
 			cfg.Gambling.Enabled = values.Has("gamblingEnabled")
 			if raw := strings.TrimSpace(values.Get("gamblingItems")); raw != "" {
 				parts := strings.Split(raw, ",")
-				items := make([]string, 0, len(parts))
+				items := make([]item.Name, 0, len(parts))
 				for _, p := range parts {
 					if p = strings.TrimSpace(p); p != "" {
-						items = append(items, p)
+						items = append(items, item.Name(p))
 					}
 				}
 				cfg.Gambling.Items = items
 			} else {
-				cfg.Gambling.Items = []string{}
+				cfg.Gambling.Items = []item.Name{}
 			}
 		}
 
@@ -2832,15 +2833,15 @@ func (s *HttpServer) characterSettings(w http.ResponseWriter, r *http.Request) {
 		cfg.Gambling.Enabled = r.Form.Has("gamblingEnabled")
 		if raw := strings.TrimSpace(r.Form.Get("gamblingItems")); raw != "" {
 			parts := strings.Split(raw, ",")
-			items := make([]string, 0, len(parts))
+			items := make([]item.Name, 0, len(parts))
 			for _, p := range parts {
 				if p = strings.TrimSpace(p); p != "" {
-					items = append(items, p)
+					items = append(items, item.Name(p))
 				}
 			}
 			cfg.Gambling.Items = items
 		} else {
-			cfg.Gambling.Items = []string{}
+			cfg.Gambling.Items = []item.Name{}
 		}
 
 		// Cube Recipes

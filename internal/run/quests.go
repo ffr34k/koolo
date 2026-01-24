@@ -403,7 +403,9 @@ func (a Quests) killRadamentQuest() error {
 		a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.Inventory)
 		screenPos := ui.GetScreenCoordsForItem(itm)
 		utils.Sleep(200)
-		a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+		if err := a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+			a.ctx.Logger.Error("Click failed", "error", err)
+		}
 		step.CloseAllMenus()
 
 		a.ctx.Logger.Info("Book of Skill used successfully.")
@@ -489,7 +491,9 @@ func (a Quests) killRadamentQuest() error {
 		itm, _ := a.ctx.Data.Inventory.Find("BookofSkill")
 		screenPos := ui.GetScreenCoordsForItem(itm)
 		utils.Sleep(200)
-		a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+		if err := a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+			a.ctx.Logger.Error("Click failed", "error", err)
+		}
 		step.CloseAllMenus()
 
 	}
@@ -825,7 +829,9 @@ func (a Quests) rescueAnyaQuest() error {
 	itm, _ := a.ctx.Data.Inventory.Find("ScrollOfResistance")
 	screenPos := ui.GetScreenCoordsForItem(itm)
 	utils.Sleep(200)
-	a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+	if err := a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+		a.ctx.Logger.Error("Click failed", "error", err)
+	}
 	step.CloseAllMenus()
 
 	return nil

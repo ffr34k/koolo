@@ -168,7 +168,9 @@ func (s *Berserker) PerformBerserkAttack(monsterID data.UnitID) {
 	}
 
 	screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
-	ctx.HID.Click(game.LeftButton, screenX, screenY)
+	if err := ctx.HID.Click(game.LeftButton, screenX, screenY); err != nil {
+		s.Logger.Error("Click failed", "error", err)
+	}
 }
 
 // Helper functions
@@ -392,7 +394,9 @@ func (s *Berserker) FindItemOnNearbyCorpses(maxRange int) {
 
 		clickPos := s.getOptimalClickPosition(corpse)
 		screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(clickPos.X, clickPos.Y)
-		ctx.HID.Click(game.RightButton, screenX, screenY)
+		if err := ctx.HID.Click(game.RightButton, screenX, screenY); err != nil {
+			s.Logger.Error("Click failed", "error", err)
+		}
 
 		s.horkedCorpses[corpse.UnitID] = true
 		time.Sleep(200 * time.Millisecond)

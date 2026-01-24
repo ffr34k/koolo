@@ -128,7 +128,9 @@ func (s *baseSupervisor) waitUntilCharacterSelectionScreen() error {
 
 	for !s.bot.ctx.GameReader.IsInCharacterSelectionScreen() {
 		// Spam left click to skip to the char select screen
-		s.bot.ctx.HID.Click(game.LeftButton, 100, 100)
+		if err := s.bot.ctx.HID.Click(game.LeftButton, 100, 100); err != nil {
+			return err
+		}
 		time.Sleep(250 * time.Millisecond)
 	}
 
@@ -267,7 +269,9 @@ func (s *baseSupervisor) ensureOnline() error {
 	}
 
 	if !s.bot.ctx.GameReader.IsOnline() && s.bot.ctx.CharacterCfg.AuthMethod != "None" {
-		s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
+		if err := s.bot.ctx.HID.Click(game.LeftButton, 1090, 32); err != nil {
+			return err
+		}
 		s.bot.ctx.Logger.Debug("[Ensure Online]: We're at the character selection screen but not online")
 
 		time.Sleep(2000 * time.Millisecond)
@@ -275,7 +279,9 @@ func (s *baseSupervisor) ensureOnline() error {
 		maxRetries := 5
 		for i := 0; i < maxRetries; i++ {
 			s.bot.ctx.Logger.Debug(fmt.Sprintf("[Ensure Online]: Trying to connect to bnet attempt %d of %d", i+1, maxRetries))
-			s.bot.ctx.HID.Click(game.LeftButton, 1090, 32)
+			if err := s.bot.ctx.HID.Click(game.LeftButton, 1090, 32); err != nil {
+				return err
+			}
 			time.Sleep(2000 * time.Millisecond)
 
 			for {

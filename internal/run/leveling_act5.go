@@ -219,7 +219,9 @@ func (a Leveling) act5() error {
 		if itm, foundAgain := a.ctx.Data.Inventory.Find("ScrollOfResistance"); foundAgain {
 			screenPos := ui.GetScreenCoordsForItem(itm)
 			utils.Sleep(200)
-			a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+			if err := a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+				a.ctx.Logger.Error("Click failed", "error", err)
+			}
 			utils.Sleep(500) // Give time for the scroll to be used
 			a.ctx.Logger.Info("ScrollOfResistance used.")
 		} else {

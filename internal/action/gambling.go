@@ -136,9 +136,13 @@ func GambleSingleItem(items []string, desiredQuality item.Quality) error {
 			ctx.Logger.Debug("Desired items not found in gambling window, refreshing...", slog.Any("items", items))
 
 			if ctx.Data.LegacyGraphics {
-				ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonXClassic, ui.GambleRefreshButtonYClassic)
+				if err := ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonXClassic, ui.GambleRefreshButtonYClassic); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 			} else {
-				ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
+				if err := ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 			}
 
 			utils.Sleep(500)
@@ -170,12 +174,12 @@ func gambleItems() error {
 
 	purchaseCounters := make(map[string]int, len(ctx.Data.CharacterCfg.Gambling.Items))
 	for _, itemName := range ctx.Data.CharacterCfg.Gambling.Items {
-		purchaseCounters[getCounterKey(itemName)] = 0
+		purchaseCounters[getCounterKey(string(itemName))] = 0
 	}
 
 	checkAndResetCounters := func() {
 		for _, itemName := range ctx.Data.CharacterCfg.Gambling.Items {
-			if purchaseCounters[getCounterKey(itemName)] < maxPurchasesPerItem {
+			if purchaseCounters[getCounterKey(string(itemName))] < maxPurchasesPerItem {
 				return
 			}
 		}
@@ -223,11 +227,11 @@ func gambleItems() error {
 		vendorItems := ctx.Data.Inventory.ByLocation(item.LocationVendor)
 
 		for _, itemName := range ctx.Data.CharacterCfg.Gambling.Items {
-			if purchaseCounters[getCounterKey(itemName)] >= maxPurchasesPerItem {
+			if purchaseCounters[getCounterKey(string(itemName))] >= maxPurchasesPerItem {
 				continue
 			}
 
-			if isGroupItem(itemName) {
+			if isGroupItem(string(itemName)) {
 				for _, vendorItem := range vendorItems {
 					if isGroupItem(string(vendorItem.Name)) {
 						bestItem = vendorItem
@@ -278,8 +282,12 @@ func gambleItems() error {
 }
 func RefreshGamblingWindow(ctx *context.Status) {
 	if ctx.Data.LegacyGraphics {
-		ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonXClassic, ui.GambleRefreshButtonYClassic)
+		if err := ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonXClassic, ui.GambleRefreshButtonYClassic); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 	} else {
-		ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
+		if err := ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 	}
 }

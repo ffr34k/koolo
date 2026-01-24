@@ -23,7 +23,9 @@ func RecoverCorpse() error {
 				ctx.Data.Corpse.Position.X,
 				ctx.Data.Corpse.Position.Y,
 			)
-			ctx.HID.Click(game.LeftButton, x, y)
+			if err := ctx.HID.Click(game.LeftButton, x, y); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 			attempts++
 		}
 		if ctx.Data.Corpse.Found {

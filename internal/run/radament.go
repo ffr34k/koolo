@@ -141,7 +141,9 @@ func (r Radament) finishQuest() error {
 	itm, _ := r.ctx.Data.Inventory.Find("BookofSkill")
 	screenPos := ui.GetScreenCoordsForItem(itm)
 	utils.Sleep(200)
-	r.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+	if err := r.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+		r.ctx.Logger.Error("Click failed", "error", err)
+	}
 	step.CloseAllMenus()
 	return nil
 }

@@ -161,16 +161,26 @@ func (d Duriel) Run(parameters *RunParameters) error {
 
 		screenPos := ui.GetScreenCoordsForItem(staff)
 
-		d.ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
+		if err := d.ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y); err != nil {
+			return err
+		}
 		utils.Sleep(300)
 		if d.ctx.Data.LegacyGraphics {
-			d.ctx.HID.Click(game.LeftButton, ui.AnvilCenterXClassic, ui.AnvilCenterYClassic)
+			if err := d.ctx.HID.Click(game.LeftButton, ui.AnvilCenterXClassic, ui.AnvilCenterYClassic); err != nil {
+				return err
+			}
 			utils.Sleep(500)
-			d.ctx.HID.Click(game.LeftButton, ui.AnvilBtnXClassic, ui.AnvilBtnYClassic)
+			if err := d.ctx.HID.Click(game.LeftButton, ui.AnvilBtnXClassic, ui.AnvilBtnYClassic); err != nil {
+				return err
+			}
 		} else {
-			d.ctx.HID.Click(game.LeftButton, ui.AnvilCenterX, ui.AnvilCenterY)
+			if err := d.ctx.HID.Click(game.LeftButton, ui.AnvilCenterX, ui.AnvilCenterY); err != nil {
+				return err
+			}
 			utils.Sleep(500)
-			d.ctx.HID.Click(game.LeftButton, ui.AnvilBtnX, ui.AnvilBtnY)
+			if err := d.ctx.HID.Click(game.LeftButton, ui.AnvilBtnX, ui.AnvilBtnY); err != nil {
+				return err
+			}
 		}
 		utils.Sleep(20000)
 	}
@@ -231,15 +241,23 @@ func (d Duriel) Run(parameters *RunParameters) error {
 			utils.Sleep(500)
 
 			if x > 5 {
-				d.ctx.HID.Click(game.LeftButton, pos.X, pos.Y)
+				if err := d.ctx.HID.Click(game.LeftButton, pos.X, pos.Y); err != nil {
+					d.ctx.Logger.Error("Click failed", "error", err)
+				}
 				utils.Sleep(300)
 				if d.ctx.Data.LegacyGraphics {
-					d.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionXClassic, ui.MercAvatarPositionYClassic)
+					if err := d.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionXClassic, ui.MercAvatarPositionYClassic); err != nil {
+						d.ctx.Logger.Error("Click failed", "error", err)
+					}
 				} else {
-					d.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
+					if err := d.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY); err != nil {
+						d.ctx.Logger.Error("Click failed", "error", err)
+					}
 				}
 			} else {
-				d.ctx.HID.Click(game.RightButton, pos.X, pos.Y)
+				if err := d.ctx.HID.Click(game.RightButton, pos.X, pos.Y); err != nil {
+					d.ctx.Logger.Error("Click failed", "error", err)
+				}
 			}
 			x++
 		}

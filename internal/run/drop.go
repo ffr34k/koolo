@@ -645,7 +645,9 @@ func (d Drop) refreshCharacterList(ctx *context.Status) error {
 	)
 	ctx.Logger.Debug("Drop: Simple Refresh - Clicking Create Character...")
 
-	ctx.HID.Click(game.LeftButton, CharCreateBtnX, CharCreateBtnY)
+	if err := ctx.HID.Click(game.LeftButton, CharCreateBtnX, CharCreateBtnY); err != nil {
+		ctx.Logger.Error("Click failed", "error", err)
+	}
 
 	utils.PingSleep(utils.Critical, 500)
 
@@ -724,7 +726,9 @@ func (d Drop) ensureOnlineForDrop(ctx *context.Status) error {
 	for attempt := 0; attempt < maxRetries; attempt++ {
 		ctx.Logger.Debug("Drop: attempting to connect to battle.net", "attempt", attempt+1)
 
-		ctx.HID.Click(game.LeftButton, 1090, 32)
+		if err := ctx.HID.Click(game.LeftButton, 1090, 32); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.PingSleep(utils.Critical, 500)
 
 		ctx.RefreshGameData()
@@ -770,7 +774,9 @@ func (d Drop) enterLobbyForDrop(ctx *context.Status) error {
 		}
 
 		ctx.Logger.Debug("Drop: Clicking 'Play' to enter lobby", "attempt", attempt+1)
-		ctx.HID.Click(game.LeftButton, 744, 650)
+		if err := ctx.HID.Click(game.LeftButton, 744, 650); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 
 		timeout := time.After(2 * time.Second)
 		checkTicker := time.NewTicker(100 * time.Millisecond)

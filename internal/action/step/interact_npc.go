@@ -76,7 +76,9 @@ func InteractNPC(npcID npc.ID) error {
 		for time.Since(hoverStart) < hoverWait {
 			if currentNPC, found := ctx.Data.Monsters.FindOne(npcID, data.MonsterTypeNone); found && currentNPC.IsHovered {
 				targetNPCID = currentNPC.UnitID
-				ctx.HID.Click(game.LeftButton, x, y)
+				if err := ctx.HID.Click(game.LeftButton, x, y); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 				time.Sleep(minMenuOpenWait)
 				break
 			}

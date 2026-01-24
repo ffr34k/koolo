@@ -68,7 +68,9 @@ func (jf JadeFigurine) Run(parameters *RunParameters) error {
 	if lifepotfound {
 		jf.ctx.HID.PressKeyBinding(jf.ctx.Data.KeyBindings.Inventory)
 		screenPos := ui.GetScreenCoordsForItem(lifepotion)
-		jf.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+		if err := jf.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+			jf.ctx.Logger.Error("Click failed", "error", err)
+		}
 		step.CloseAllMenus()
 	}
 	return nil

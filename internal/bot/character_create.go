@@ -64,12 +64,16 @@ func AutoCreateCharacter(class, name string) error {
 	if err != nil {
 		return err
 	}
-	ctx.HID.Click(game.LeftButton, classPos[0], classPos[1])
+	if err := ctx.HID.Click(game.LeftButton, classPos[0], classPos[1]); err != nil {
+		return err
+	}
 	utils.Sleep(500)
 
 	// 3. Toggle Ladder
 	if !ctx.CharacterCfg.Game.IsNonLadderChar {
-		ctx.HID.Click(game.LeftButton, ui.CharLadderBtnX, ui.CharLadderBtnY)
+		if err := ctx.HID.Click(game.LeftButton, ui.CharLadderBtnX, ui.CharLadderBtnY); err != nil {
+			return err
+		}
 		utils.Sleep(300)
 	}
 
@@ -85,7 +89,9 @@ func AutoCreateCharacter(class, name string) error {
 	}
 
 	// 6. Click Create Button
-	ctx.HID.Click(game.LeftButton, ui.CharCreateBtnX, ui.CharCreateBtnY)
+	if err := ctx.HID.Click(game.LeftButton, ui.CharCreateBtnX, ui.CharCreateBtnY); err != nil {
+		return err
+	}
 	utils.Sleep(1500)
 
 	// 7. Confirm hardcore warning dialog
@@ -117,9 +123,13 @@ func AutoCreateCharacter(class, name string) error {
 
 func enterCreationScreen(ctx *context.Status) error {
 	for i := 0; i < 5; i++ {
-		ctx.HID.Click(game.LeftButton, ui.CharCreateNewBtnX, ui.CharCreateNewBtnY)
+		if err := ctx.HID.Click(game.LeftButton, ui.CharCreateNewBtnX, ui.CharCreateNewBtnY); err != nil {
+			return err
+		}
 		utils.Sleep(180)
-		ctx.HID.Click(game.LeftButton, ui.CharCreateNewBtnX, ui.CharCreateNewBtnY)
+		if err := ctx.HID.Click(game.LeftButton, ui.CharCreateNewBtnX, ui.CharCreateNewBtnY); err != nil {
+			return err
+		}
 		utils.Sleep(1500)
 		if ctx.GameReader.IsInCharacterCreationScreen() {
 			return nil
@@ -139,7 +149,9 @@ func getClassPosition(class string) ([2]int, error) {
 }
 
 func inputCharacterName(ctx *context.Status, name string) error {
-	ctx.HID.Click(game.LeftButton, ui.CharNameInputX, ui.CharNameInputY)
+	if err := ctx.HID.Click(game.LeftButton, ui.CharNameInputX, ui.CharNameInputY); err != nil {
+		return err
+	}
 	utils.Sleep(300)
 
 	// Clear existing text

@@ -671,7 +671,9 @@ func (s Javazon) chargedStrike(monsterID data.UnitID) {
 	}
 
 	screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
-	ctx.HID.Click(game.RightButton, screenX, screenY)
+	if err := ctx.HID.Click(game.RightButton, screenX, screenY); err != nil {
+		s.Logger.Error("Click failed", "error", err)
+	}
 }
 
 func (s Javazon) chargedStrikeBossFast(monsterID data.UnitID) {
@@ -700,7 +702,9 @@ func (s Javazon) chargedStrikeBossFast(monsterID data.UnitID) {
 	}
 
 	screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
-	ctx.HID.Click(game.RightButton, screenX, screenY)
+	if err := ctx.HID.Click(game.RightButton, screenX, screenY); err != nil {
+		s.Logger.Error("Click failed", "error", err)
+	}
 	utils.Sleep(jzDkMinClickDelayMS)
 }
 
@@ -952,7 +956,9 @@ func (s Javazon) jzDkLightningFury(targetID data.UnitID, attacks int) bool {
 			return false
 		}
 		x, y := ctx.PathFinder.GameCoordsToScreenCords(m.Position.X, m.Position.Y)
-		ctx.HID.Click(game.RightButton, x, y)
+		if err := ctx.HID.Click(game.RightButton, x, y); err != nil {
+			s.Logger.Error("Click failed", "error", err)
+		}
 		utils.Sleep(jzDkMinClickDelayMS)
 	}
 

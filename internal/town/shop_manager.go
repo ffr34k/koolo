@@ -337,7 +337,9 @@ func BuyItem(i data.Item, quantity int) {
 
 	utils.PingSleep(utils.Medium, 250) // Medium operation: Pre-buy delay
 	for k := 0; k < quantity; k++ {
-		ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+		if err := ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.PingSleep(utils.Medium, 600) // Medium operation: Wait for purchase to process
 		ctx.Logger.Debug(fmt.Sprintf("Purchased %s [X:%d Y:%d]", i.Desc().Name, i.Position.X, i.Position.Y))
 	}

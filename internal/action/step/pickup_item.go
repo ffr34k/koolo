@@ -143,7 +143,9 @@ func PickupItemMouse(it data.Item, itemPickupAttempt int) error {
 
 		// Click on item if mouse is hovering over
 		if currentItem.UnitID == ctx.GameReader.GameReader.GetData().HoverData.UnitID {
-			ctx.HID.Click(game.LeftButton, cursorX, cursorY)
+			if err := ctx.HID.Click(game.LeftButton, cursorX, cursorY); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 			utils.PingSleep(utils.Light, 150)
 
 			if waitingForInteraction.IsZero() {
@@ -155,7 +157,9 @@ func PickupItemMouse(it data.Item, itemPickupAttempt int) error {
 		// Sometimes we got stuck because mouse is hovering a chest and item is in behind, it usually happens a lot
 		// on Andariel, so we open it
 		if isChestorShrineHovered() {
-			ctx.HID.Click(game.LeftButton, cursorX, cursorY)
+			if err := ctx.HID.Click(game.LeftButton, cursorX, cursorY); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 			time.Sleep(50 * time.Millisecond)
 		}
 

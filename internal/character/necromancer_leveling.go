@@ -177,7 +177,9 @@ func (n *NecromancerLeveling) castCorpseSkill(skillID skill.ID, corpse *data.Mon
 
 	ctx.HID.KeyDown(ctx.Data.KeyBindings.StandStill)
 	x, y := ctx.PathFinder.GameCoordsToScreenCords(corpse.Position.X, corpse.Position.Y)
-	ctx.HID.Click(game.RightButton, x, y)
+	if err := ctx.HID.Click(game.RightButton, x, y); err != nil {
+		ctx.Logger.Error("Click failed", "error", err)
+	}
 	ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)
 	utils.Sleep(50)
 }

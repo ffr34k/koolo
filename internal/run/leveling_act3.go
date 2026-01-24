@@ -495,7 +495,9 @@ func (a Leveling) jadefigurine() error {
 	if lifepotfound {
 		a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.Inventory)
 		screenPos := ui.GetScreenCoordsForItem(lifepotion)
-		a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+		if err := a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+			a.ctx.Logger.Error("Click failed", "error", err)
+		}
 		step.CloseAllMenus()
 	}
 	return nil

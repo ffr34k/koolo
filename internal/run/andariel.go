@@ -250,16 +250,24 @@ func (a Andariel) Run(parameters *RunParameters) error {
 
 					if x > 3 {
 
-						a.ctx.HID.Click(game.LeftButton, pos.X, pos.Y)
+						if err := a.ctx.HID.Click(game.LeftButton, pos.X, pos.Y); err != nil {
+							a.ctx.Logger.Error("Click failed", "error", err)
+						}
 						utils.Sleep(300)
 						if a.ctx.Data.LegacyGraphics {
-							a.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionXClassic, ui.MercAvatarPositionYClassic)
+							if err := a.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionXClassic, ui.MercAvatarPositionYClassic); err != nil {
+								a.ctx.Logger.Error("Click failed", "error", err)
+							}
 						} else {
-							a.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY)
+							if err := a.ctx.HID.Click(game.LeftButton, ui.MercAvatarPositionX, ui.MercAvatarPositionY); err != nil {
+								a.ctx.Logger.Error("Click failed", "error", err)
+							}
 						}
 
 					} else {
-						a.ctx.HID.Click(game.RightButton, pos.X, pos.Y)
+						if err := a.ctx.HID.Click(game.RightButton, pos.X, pos.Y); err != nil {
+							a.ctx.Logger.Error("Click failed", "error", err)
+						}
 					}
 					x++
 				}
