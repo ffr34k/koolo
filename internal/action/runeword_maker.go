@@ -161,7 +161,9 @@ func SocketItems(ctx *context.Status, recipe Runeword, base data.Item, items ...
 		ctx.Logger.Debug(fmt.Sprintf("Clicking after 5s at %d:%d", screenPos.X, screenPos.Y))
 		moveSucceeded := false
 		for attempt := 0; attempt < 2; attempt++ {
-			ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+			if err := ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey); err != nil {
+				ctx.Logger.Error("ClickWithModifier failed", "error", err)
+			}
 			utils.Sleep(500)
 			ctx.RefreshGameData()
 			moved, found := ctx.Data.Inventory.FindByID(base.UnitID)
@@ -219,7 +221,9 @@ func SocketItems(ctx *context.Status, recipe Runeword, base data.Item, items ...
 		}
 
 		screenPos := ui.GetScreenCoordsForItem(itm)
-		ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
+		if err := ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.Sleep(300)
 
 		for _, movedBase := range ctx.Data.Inventory.AllItems {
@@ -229,7 +233,9 @@ func SocketItems(ctx *context.Status, recipe Runeword, base data.Item, items ...
 				}
 
 				basescreenPos := ui.GetScreenCoordsForItem(movedBase)
-				ctx.HID.Click(game.LeftButton, basescreenPos.X, basescreenPos.Y)
+				if err := ctx.HID.Click(game.LeftButton, basescreenPos.X, basescreenPos.Y); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 				utils.Sleep(300)
 				if itm.Location.LocationType == item.LocationCursor {
 					step.CloseAllMenus()

@@ -217,7 +217,9 @@ func switchVendorTabFast(tab int) {
 		x = ui.SwitchStashTabBtnX + (tab-1)*ui.SwitchStashTabBtnTabSize + ui.SwitchStashTabBtnTabSize/2
 		y = ui.SwitchStashTabBtnY
 	}
-	ctx.HID.Click(game.LeftButton, x, y)
+	if err := ctx.HID.Click(game.LeftButton, x, y); err != nil {
+		ctx.Logger.Error("Click failed", "error", err)
+	}
 	ctx.RefreshGameData()
 }
 

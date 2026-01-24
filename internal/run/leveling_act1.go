@@ -353,9 +353,13 @@ func gambleAct1Belt(ctx *context.Status) error {
 		// If no desired item was found, refresh the gambling window
 		ctx.Logger.Info("Desired items not found in gambling window, refreshing...")
 		if ctx.Data.LegacyGraphics {
-			ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonXClassic, ui.GambleRefreshButtonYClassic)
+			if err := ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonXClassic, ui.GambleRefreshButtonYClassic); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 		} else {
-			ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY)
+			if err := ctx.HID.Click(game.LeftButton, ui.GambleRefreshButtonX, ui.GambleRefreshButtonY); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 		}
 		utils.Sleep(500)
 	}

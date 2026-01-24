@@ -269,7 +269,9 @@ func MoveToArea(dst area.ID) error {
 					lvl.Position.X-2,
 					lvl.Position.Y-2,
 				)
-				ctx.HID.Click(game.LeftButton, screenX, screenY)
+				if err := ctx.HID.Click(game.LeftButton, screenX, screenY); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 				utils.Sleep(800)
 			}
 

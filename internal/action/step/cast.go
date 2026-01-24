@@ -70,10 +70,14 @@ func CastAtPosition(skillID skill.ID, standStill bool, castPos data.Position) bo
 	x, y := ctx.PathFinder.GameCoordsToScreenCords(castPos.X, castPos.Y)
 	castIssued := false
 	if leftSelected {
-		ctx.HID.Click(game.LeftButton, x, y)
+		if err := ctx.HID.Click(game.LeftButton, x, y); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		castIssued = true
 	} else if rightSelected {
-		ctx.HID.Click(game.RightButton, x, y)
+		if err := ctx.HID.Click(game.RightButton, x, y); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		castIssued = true
 	}
 	return castIssued

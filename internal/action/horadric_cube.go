@@ -59,7 +59,9 @@ func CubeAddItems(items ...data.Item) error {
 		ctx.Logger.Debug("Item found on the stash, picking it up", slog.String("Item", string(nwIt.Name)))
 		screenPos := ui.GetScreenCoordsForItem(nwIt)
 
-		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+		if err := ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey); err != nil {
+			ctx.Logger.Error("ClickWithModifier failed", "error", err)
+		}
 		utils.Sleep(300)
 	}
 
@@ -80,7 +82,9 @@ func CubeAddItems(items ...data.Item) error {
 
 				screenPos := ui.GetScreenCoordsForItem(updatedItem)
 
-				ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+				if err := ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey); err != nil {
+					ctx.Logger.Error("ClickWithModifier failed", "error", err)
+				}
 				utils.Sleep(500)
 			}
 		}
@@ -101,9 +105,13 @@ func CubeTransmute() error {
 	utils.Sleep(150)
 
 	if ctx.Data.LegacyGraphics {
-		ctx.HID.Click(game.LeftButton, ui.CubeTransmuteBtnXClassic, ui.CubeTransmuteBtnYClassic)
+		if err := ctx.HID.Click(game.LeftButton, ui.CubeTransmuteBtnXClassic, ui.CubeTransmuteBtnYClassic); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 	} else {
-		ctx.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY)
+		if err := ctx.HID.Click(game.LeftButton, ui.CubeTransmuteBtnX, ui.CubeTransmuteBtnY); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 	}
 
 	utils.Sleep(2000)
@@ -114,7 +122,9 @@ func CubeTransmute() error {
 
 		screenPos := ui.GetScreenCoordsForItem(itm)
 
-		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+		if err := ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey); err != nil {
+			ctx.Logger.Error("ClickWithModifier failed", "error", err)
+		}
 		utils.Sleep(500)
 	}
 
@@ -152,7 +162,9 @@ func ensureCubeIsEmpty() error {
 
 		screenPos := ui.GetScreenCoordsForItem(itm)
 
-		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+		if err := ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey); err != nil {
+			ctx.Logger.Error("ClickWithModifier failed", "error", err)
+		}
 		utils.Sleep(700)
 
 		itm, _ = ctx.Data.Inventory.FindByID(itm.UnitID)
@@ -204,7 +216,9 @@ func ensureCubeIsOpen() error {
 	screenPos := ui.GetScreenCoordsForItem(cube)
 
 	utils.Sleep(300)
-	ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+	if err := ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+		ctx.Logger.Error("Click failed", "error", err)
+	}
 	utils.Sleep(500)
 
 	if ctx.Data.OpenMenus.Cube {

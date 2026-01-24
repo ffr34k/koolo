@@ -236,7 +236,9 @@ func (a Leveling) act2() error {
 		a.ctx.HID.PressKeyBinding(a.ctx.Data.KeyBindings.Inventory)
 		screenPos := ui.GetScreenCoordsForItem(itm)
 		utils.Sleep(200)
-		a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+		if err := a.ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+			a.ctx.Logger.Error("Click failed", "error", err)
+		}
 		step.CloseAllMenus()
 
 		a.ctx.Logger.Info("Book of Skill used successfully.")

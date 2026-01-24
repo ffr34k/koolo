@@ -178,7 +178,9 @@ func (t Tristram) openPortalIfNotOpened() error {
 						stoneTries++
 						utils.Sleep(200)
 						x, y := t.ctx.PathFinder.GameCoordsToScreenCords(stone.Position.X, stone.Position.Y)
-						t.ctx.HID.Click(game.LeftButton, x+3*stoneTries, y)
+						if err := t.ctx.HID.Click(game.LeftButton, x+3*stoneTries, y); err != nil {
+							t.ctx.Logger.Error("Click failed", "error", err)
+						}
 						t.ctx.Logger.Debug(fmt.Sprintf("Tried to click %s at screen pos %vx%v", stone.Desc().Name, x, y))
 						return false
 					}

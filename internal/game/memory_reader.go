@@ -234,15 +234,38 @@ func (gd *MemoryReader) SetTeleportableDiagonal(grid *[][]CollisionType, xStart 
 }
 
 func (gd *MemoryReader) updateWindowPositionData() {
-	pos := win.WINDOWPLACEMENT{}
 	point := win.POINT{}
 	win.ClientToScreen(gd.HWND, &point)
-	win.GetWindowPlacement(gd.HWND, &pos)
 
 	gd.WindowLeftX = int(point.X)
 	gd.WindowTopY = int(point.Y)
-	gd.GameAreaSizeX = int(pos.RcNormalPosition.Right) - gd.WindowLeftX - 9
-	gd.GameAreaSizeY = int(pos.RcNormalPosition.Bottom) - gd.WindowTopY - 9
+
+	// Use GetClientRect for accurate client area size
+	var clientRect win.RECT
+	win.GetClientRect(gd.HWND, &clientRect)
+	gd.GameAreaSizeX = int(clientRect.Right - clientRect.Left)
+	gd.GameAreaSizeY = int(clientRect.Bottom - clientRect.Top)
+}
+
+// ForceResize resizes the game window to achieve the specified client area dimensions.
+// It accounts for window borders and title bar by calculating the chrome size.
+func (gd *MemoryReader) ForceResize(clientWidth, clientHeight int) {
+	// Get current window and client rects to calculate border/chrome size
+	var windowRect win.RECT
+	var clientRect win.RECT
+	win.GetWindowRect(gd.HWND, &windowRect)
+	win.GetClientRect(gd.HWND, &clientRect)
+
+	// Calculate the border/chrome size (difference between window and client area)
+	borderX := int(windowRect.Right-windowRect.Left) - int(clientRect.Right-clientRect.Left)
+	borderY := int(windowRect.Bottom-windowRect.Top) - int(clientRect.Bottom-clientRect.Top)
+
+	// Add borders to get the full window size needed for desired client area
+	windowWidth := clientWidth + borderX
+	windowHeight := clientHeight + borderY
+
+	uFlags := win.SWP_NOZORDER | win.SWP_NOMOVE | win.SWP_NOACTIVATE
+	win.SetWindowPos(gd.HWND, 0, 0, 0, int32(windowWidth), int32(windowHeight), uint32(uFlags))
 }
 
 func (gd *MemoryReader) GetData() Data {

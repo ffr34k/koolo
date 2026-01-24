@@ -137,7 +137,9 @@ func enterTownPortal(ctx *context.Status, portal data.Object) error {
 		objectY := portalPos.Y - 2
 		mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
 
-		ctx.HID.Click(game.LeftButton, mX, mY)
+		if err := ctx.HID.Click(game.LeftButton, mX, mY); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.Sleep(500)
 
 		maxWaitAttempts := 30
@@ -223,7 +225,9 @@ func enterUberTristramPortal(ctx *context.Status, portal data.Object) error {
 	objectY := portalObj.Position.Y - 2
 	mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
 
-	ctx.HID.Click(game.LeftButton, mX, mY)
+	if err := ctx.HID.Click(game.LeftButton, mX, mY); err != nil {
+		ctx.Logger.Error("Click failed", "error", err)
+	}
 	utils.Sleep(500)
 
 	maxWaitAttempts := 30
@@ -608,10 +612,14 @@ func moveItemToPosition(ctx *context.Status, itm data.Item, targetPos data.Posit
 	}
 
 	invCoords := ui.GetScreenCoordsForItem(itm)
-	ctx.HID.Click(game.LeftButton, invCoords.X, invCoords.Y)
+	if err := ctx.HID.Click(game.LeftButton, invCoords.X, invCoords.Y); err != nil {
+		return err
+	}
 	utils.Sleep(200)
 	targetCoords := ui.GetScreenCoordsForInventoryPosition(targetPos, item.LocationInventory)
-	ctx.HID.Click(game.LeftButton, targetCoords.X, targetCoords.Y)
+	if err := ctx.HID.Click(game.LeftButton, targetCoords.X, targetCoords.Y); err != nil {
+		return err
+	}
 	utils.Sleep(300)
 	ctx.RefreshGameData()
 	return nil

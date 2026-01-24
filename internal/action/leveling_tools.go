@@ -154,7 +154,9 @@ func dropItemFromInventoryUI(i data.Item) error {
 	screenPos := ui.GetScreenCoordsForItem(i)
 	ctx.HID.MovePointer(screenPos.X, screenPos.Y)
 	utils.Sleep(100)
-	ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+	if err := ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey); err != nil {
+		ctx.Logger.Error("ClickWithModifier failed", "error", err)
+	}
 	utils.Sleep(300)
 
 	return nil
@@ -402,9 +404,13 @@ func ResetBindings() error {
 
 		// 2. Open the secondary skill assignment UI
 		if ctx.GameReader.LegacyGraphics() {
-			ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonXClassic, ui.SecondarySkillButtonYClassic)
+			if err := ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonXClassic, ui.SecondarySkillButtonYClassic); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 		} else {
-			ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
+			if err := ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 		}
 		utils.Sleep(300) // Give time for UI to open
 
@@ -577,7 +583,9 @@ func ResetStats() error {
 				}
 
 				// Ctrl-click to unequip the item to stash directly
-				ctx.HID.ClickWithModifier(game.LeftButton, slotCoords.X, slotCoords.Y, game.CtrlKey)
+				if err := ctx.HID.ClickWithModifier(game.LeftButton, slotCoords.X, slotCoords.Y, game.CtrlKey); err != nil {
+					ctx.Logger.Error("ClickWithModifier failed", "error", err)
+				}
 				utils.Sleep(500)
 
 				utils.Sleep(250)
@@ -741,7 +749,9 @@ func TryConsumeStaminaPot() {
 		if staminaPotion, found := ctx.Data.Inventory.Find("StaminaPotion", item.LocationInventory); found {
 			ctx.HID.PressKeyBinding(ctx.Data.KeyBindings.Inventory)
 			screenPos := ui.GetScreenCoordsForItem(staminaPotion)
-			ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+			if err := ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 			step.CloseAllMenus()
 		}
 	}

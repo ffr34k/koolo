@@ -46,7 +46,9 @@ func DropMouseItem() {
 
 	if len(ctx.Data.Inventory.ByLocation(item.LocationCursor)) > 0 {
 		utils.Sleep(1000)
-		ctx.HID.Click(game.LeftButton, 500, 500)
+		if err := ctx.HID.Click(game.LeftButton, 500, 500); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.Sleep(1000)
 	}
 }
@@ -69,7 +71,9 @@ func DropAndRecoverCursorItem() {
 
 	// Drop the item
 	utils.Sleep(500)
-	ctx.HID.Click(game.LeftButton, 500, 500)
+	if err := ctx.HID.Click(game.LeftButton, 500, 500); err != nil {
+		ctx.Logger.Error("Click failed", "error", err)
+	}
 	utils.Sleep(500)
 
 	// Wait for game to register the dropped item on ground
@@ -170,7 +174,9 @@ func DropInventoryItem(i data.Item) error {
 		screenPos := ui.GetScreenCoordsForItem(i)
 		ctx.HID.MovePointer(screenPos.X, screenPos.Y)
 		utils.Sleep(250)
-		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+		if err := ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey); err != nil {
+			ctx.Logger.Error("ClickWithModifier failed", "error", err)
+		}
 		utils.Sleep(500)
 
 		// Close the inventory if its still open, which should be at this point
@@ -430,7 +436,9 @@ func DrinkAllPotionsInInventory() {
 
 			screenPos := ui.GetScreenCoordsForItem(i)
 			utils.Sleep(100)
-			ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+			if err := ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 			utils.Sleep(200)
 		}
 	}

@@ -63,11 +63,15 @@ func ManageBelt() error {
 
 		// Just consume the potion if there is no space in inventory for the potion
 		if !hasInventorySpaceForPotion(potion) {
-			ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+			if err := ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 			continue
 		}
 
-		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.ShiftKey)
+		if err := ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.ShiftKey); err != nil {
+			ctx.Logger.Error("ClickWithModifier failed", "error", err)
+		}
 	}
 
 	ctx.RefreshGameData()

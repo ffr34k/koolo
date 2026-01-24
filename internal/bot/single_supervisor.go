@@ -96,7 +96,9 @@ func (s *SinglePlayerSupervisor) changeDifficulty(d difficulty.Difficulty) {
 
 	s.bot.ctx.GameReader.GetSelectedCharacterName()
 
-	s.bot.ctx.HID.Click(game.LeftButton, 6, 6)
+	if err := s.bot.ctx.HID.Click(game.LeftButton, 6, 6); err != nil {
+		s.bot.ctx.Logger.Error("Click failed", "error", err)
+	}
 
 	utils.Sleep(1000)
 
@@ -104,21 +106,29 @@ func (s *SinglePlayerSupervisor) changeDifficulty(d difficulty.Difficulty) {
 
 	case difficulty.Normal:
 
-		s.bot.ctx.HID.Click(game.LeftButton, 400, 350)
+		if err := s.bot.ctx.HID.Click(game.LeftButton, 400, 350); err != nil {
+			s.bot.ctx.Logger.Error("Click failed", "error", err)
+		}
 
 	case difficulty.Nightmare:
 
-		s.bot.ctx.HID.Click(game.LeftButton, 400, 400)
+		if err := s.bot.ctx.HID.Click(game.LeftButton, 400, 400); err != nil {
+			s.bot.ctx.Logger.Error("Click failed", "error", err)
+		}
 
 	case difficulty.Hell:
 
-		s.bot.ctx.HID.Click(game.LeftButton, 400, 450)
+		if err := s.bot.ctx.HID.Click(game.LeftButton, 400, 450); err != nil {
+			s.bot.ctx.Logger.Error("Click failed", "error", err)
+		}
 
 	}
 
 	utils.Sleep(1000)
 
-	s.bot.ctx.HID.Click(game.LeftButton, 6, 6)
+	if err := s.bot.ctx.HID.Click(game.LeftButton, 6, 6); err != nil {
+		s.bot.ctx.Logger.Error("Click failed", "error", err)
+	}
 
 	utils.Sleep(1000)
 
@@ -829,7 +839,9 @@ func (s *SinglePlayerSupervisor) tryEnterLobby() error {
 			return fmt.Errorf("[Menu Flow]: Failed to enter bnet lobby after 5 retries")
 		}
 
-		s.bot.ctx.HID.Click(game.LeftButton, 744, 650)
+		if err := s.bot.ctx.HID.Click(game.LeftButton, 744, 650); err != nil {
+			return err
+		}
 		utils.Sleep(1000)
 		retryCount++
 	}

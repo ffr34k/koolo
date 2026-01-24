@@ -43,10 +43,14 @@ func WayPoint(dest area.ID) error {
 			}
 			if ctx.Data.LegacyGraphics {
 				actTabX := ui.WpTabStartXClassic + (wpCoords.Tab-1)*ui.WpTabSizeXClassic + (ui.WpTabSizeXClassic / 2)
-				ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartYClassic)
+				if err := ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartYClassic); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 			} else {
 				actTabX := ui.WpTabStartX + (wpCoords.Tab-1)*ui.WpTabSizeX + (ui.WpTabSizeX / 2)
-				ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartY)
+				if err := ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartY); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 			}
 			utils.PingSleep(utils.Medium, 250) // Medium operation: Wait for waypoint tab to load
 			// Just to make sure no message like TZ change or public game spam prevent bot from clicking on waypoint
@@ -103,10 +107,14 @@ func FieldWayPoint(dest area.ID) error {
 			}
 			if ctx.Data.LegacyGraphics {
 				actTabX := ui.WpTabStartXClassic + (wpCoords.Tab-1)*ui.WpTabSizeXClassic + (ui.WpTabSizeXClassic / 2)
-				ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartYClassic)
+				if err := ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartYClassic); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 			} else {
 				actTabX := ui.WpTabStartX + (wpCoords.Tab-1)*ui.WpTabSizeX + (ui.WpTabSizeX / 2)
-				ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartY)
+				if err := ctx.HID.Click(game.LeftButton, actTabX, ui.WpTabStartY); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 			}
 			utils.Sleep(200)
 			// Just to make sure no message like TZ change or public game spam prevent bot from clicking on waypoint
@@ -170,10 +178,14 @@ func useWP(dest area.ID) error {
 	// First use the previous available waypoint that we have discovered
 	if ctx.Data.LegacyGraphics {
 		areaBtnY := ui.WpListStartYClassic + (currentWP.Row-1)*ui.WpAreaBtnHeightClassic + (ui.WpAreaBtnHeightClassic / 2)
-		ctx.HID.Click(game.LeftButton, ui.WpListPositionXClassic, areaBtnY)
+		if err := ctx.HID.Click(game.LeftButton, ui.WpListPositionXClassic, areaBtnY); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 	} else {
 		areaBtnY := ui.WpListStartY + (currentWP.Row-1)*ui.WpAreaBtnHeight + (ui.WpAreaBtnHeight / 2)
-		ctx.HID.Click(game.LeftButton, ui.WpListPositionX, areaBtnY)
+		if err := ctx.HID.Click(game.LeftButton, ui.WpListPositionX, areaBtnY); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 	}
 	utils.PingSleep(utils.Critical, 1000) // Critical operation: Wait for waypoint travel to complete
 

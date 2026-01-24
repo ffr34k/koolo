@@ -415,7 +415,9 @@ func stashItemAction(i data.Item, rule string, ruleFile string, skipLogging bool
 	utils.PingSleep(utils.Medium, 170)        // Medium operation: Move pointer to item
 	screenshot := ctx.GameReader.Screenshot() // Take screenshot *before* attempting stash
 	utils.PingSleep(utils.Medium, 150)        // Medium operation: Wait for screenshot
-	ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+	if err := ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey); err != nil {
+		ctx.Logger.Error("ClickWithModifier failed", "error", err)
+	}
 	utils.PingSleep(utils.Medium, 500) // Medium operation: Give game time to process the stash
 
 	// Verify if the item is no longer in inventory
@@ -519,7 +521,9 @@ func DropItem(i data.Item) {
 	screenPos := ui.GetScreenCoordsForItem(i)
 	ctx.HID.MovePointer(screenPos.X, screenPos.Y)
 	utils.PingSleep(utils.Medium, 170) // Medium operation: Position pointer on item
-	ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+	if err := ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey); err != nil {
+		ctx.Logger.Error("ClickWithModifier failed", "error", err)
+	}
 	utils.PingSleep(utils.Medium, 500) // Medium operation: Wait for item to drop
 	step.CloseAllMenus()
 	utils.PingSleep(utils.Medium, 170) // Medium operation: Clean up UI
@@ -570,13 +574,21 @@ func clickStashGoldBtn() {
 
 	utils.PingSleep(utils.Medium, 170) // Medium operation: Prepare for gold button click
 	if ctx.GameReader.LegacyGraphics() {
-		ctx.HID.Click(game.LeftButton, ui.StashGoldBtnXClassic, ui.StashGoldBtnYClassic)
+		if err := ctx.HID.Click(game.LeftButton, ui.StashGoldBtnXClassic, ui.StashGoldBtnYClassic); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.PingSleep(utils.Critical, 1000) // Critical operation: Wait for confirm dialog
-		ctx.HID.Click(game.LeftButton, ui.StashGoldBtnConfirmXClassic, ui.StashGoldBtnConfirmYClassic)
+		if err := ctx.HID.Click(game.LeftButton, ui.StashGoldBtnConfirmXClassic, ui.StashGoldBtnConfirmYClassic); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 	} else {
-		ctx.HID.Click(game.LeftButton, ui.StashGoldBtnX, ui.StashGoldBtnY)
+		if err := ctx.HID.Click(game.LeftButton, ui.StashGoldBtnX, ui.StashGoldBtnY); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.PingSleep(utils.Critical, 1000) // Critical operation: Wait for confirm dialog
-		ctx.HID.Click(game.LeftButton, ui.StashGoldBtnConfirmX, ui.StashGoldBtnConfirmY)
+		if err := ctx.HID.Click(game.LeftButton, ui.StashGoldBtnConfirmX, ui.StashGoldBtnConfirmY); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 	}
 }
 
@@ -594,7 +606,9 @@ func SwitchStashTab(tab int) {
 
 		tabSize := ui.SwitchStashTabBtnTabSizeClassic
 		x = x + tabSize*tab - tabSize/2
-		ctx.HID.Click(game.LeftButton, x, y)
+		if err := ctx.HID.Click(game.LeftButton, x, y); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.PingSleep(utils.Medium, 500) // Medium operation: Wait for tab switch
 	} else {
 		x := ui.SwitchStashTabBtnX
@@ -602,7 +616,9 @@ func SwitchStashTab(tab int) {
 
 		tabSize := ui.SwitchStashTabBtnTabSize
 		x = x + tabSize*tab - tabSize/2
-		ctx.HID.Click(game.LeftButton, x, y)
+		if err := ctx.HID.Click(game.LeftButton, x, y); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.PingSleep(utils.Medium, 500) // Medium operation: Wait for tab switch
 	}
 
@@ -664,7 +680,9 @@ func TakeItemsFromStash(stashedItems []data.Item) error {
 		// Move the item to the inventory
 		screenPos := ui.GetScreenCoordsForItem(i)
 		ctx.HID.MovePointer(screenPos.X, screenPos.Y)
-		ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey)
+		if err := ctx.HID.ClickWithModifier(game.LeftButton, screenPos.X, screenPos.Y, game.CtrlKey); err != nil {
+			ctx.Logger.Error("ClickWithModifier failed", "error", err)
+		}
 		utils.PingSleep(utils.Medium, 500) // Medium operation: Wait for item to move to inventory
 	}
 

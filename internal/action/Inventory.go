@@ -304,10 +304,14 @@ func OptimizeInventory(location item.LocationType) error {
 
 			//..Then inventory location
 			screenPos := ui.GetScreenCoordsForItem(itm)
-			ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
+			if err := ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 			utils.PingSleep(utils.Medium, 500)
 			newScreenPos := ui.GetScreenCoordsForInventoryPosition(position, location)
-			ctx.HID.Click(game.LeftButton, newScreenPos.X, newScreenPos.Y)
+			if err := ctx.HID.Click(game.LeftButton, newScreenPos.X, newScreenPos.Y); err != nil {
+				ctx.Logger.Error("Click failed", "error", err)
+			}
 			utils.PingSleep(utils.Medium, 500)
 		} else {
 			//No more items to reorganise, we're done

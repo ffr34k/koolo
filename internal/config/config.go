@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/hectorgimenez/d2go/pkg/data"
+	"github.com/hectorgimenez/d2go/pkg/data/item"
 	"github.com/hectorgimenez/koolo/internal/utils"
 
 	"os"
@@ -664,7 +665,7 @@ func Load() error {
 		}
 
 		if len(charCfg.Gambling.Items) == 0 {
-			charCfg.Gambling.Items = []string{"coronet", "circlet", "amulet"}
+			charCfg.Gambling.Items = []item.Name{"coronet", "circlet", "amulet"}
 		}
 
 		var pickitPath string

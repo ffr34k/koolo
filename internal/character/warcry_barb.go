@@ -375,7 +375,9 @@ func (s *WarcryBarb) tryGrimWard() {
 
 		clickPos := s.clickPos(corpse)
 		screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(clickPos.X, clickPos.Y)
-		ctx.HID.Click(game.RightButton, screenX, screenY)
+		if err := ctx.HID.Click(game.RightButton, screenX, screenY); err != nil {
+			s.Logger.Error("Click failed", "error", err)
+		}
 
 		s.grimWardCasted[corpse.UnitID] = true
 		s.lastGrimWardCast = time.Now()
@@ -528,7 +530,9 @@ func (s *WarcryBarb) horkCorpses(maxRange int) {
 
 		clickPos := s.clickPos(corpse)
 		screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(clickPos.X, clickPos.Y)
-		ctx.HID.Click(game.RightButton, screenX, screenY)
+		if err := ctx.HID.Click(game.RightButton, screenX, screenY); err != nil {
+			s.Logger.Error("Click failed", "error", err)
+		}
 
 		s.horkedCorpses[corpse.UnitID] = true
 		time.Sleep(time.Millisecond * 200)

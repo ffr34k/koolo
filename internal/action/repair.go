@@ -153,9 +153,13 @@ func repairAllAtNPC(repairNPC npc.ID) error {
 
 	utils.Sleep(100)
 	if ctx.Data.LegacyGraphics {
-		ctx.HID.Click(game.LeftButton, ui.RepairButtonXClassic, ui.RepairButtonYClassic)
+		if err := ctx.HID.Click(game.LeftButton, ui.RepairButtonXClassic, ui.RepairButtonYClassic); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 	} else {
-		ctx.HID.Click(game.LeftButton, ui.RepairButtonX, ui.RepairButtonY)
+		if err := ctx.HID.Click(game.LeftButton, ui.RepairButtonX, ui.RepairButtonY); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 	}
 	utils.Sleep(500)
 
@@ -234,9 +238,13 @@ func Repair() error {
 
 			utils.Sleep(100)
 			if ctx.Data.LegacyGraphics {
-				ctx.HID.Click(game.LeftButton, ui.RepairButtonXClassic, ui.RepairButtonYClassic)
+				if err := ctx.HID.Click(game.LeftButton, ui.RepairButtonXClassic, ui.RepairButtonYClassic); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 			} else {
-				ctx.HID.Click(game.LeftButton, ui.RepairButtonX, ui.RepairButtonY)
+				if err := ctx.HID.Click(game.LeftButton, ui.RepairButtonX, ui.RepairButtonY); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 			}
 			utils.Sleep(500)
 

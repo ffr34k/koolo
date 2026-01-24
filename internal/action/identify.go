@@ -182,11 +182,15 @@ func identifyItem(idTome data.Item, i data.Item) {
 	screenPos := ui.GetScreenCoordsForItem(idTome)
 
 	utils.PingSleep(utils.Medium, 500) // Medium operation: Prepare for right-click on tome
-	ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y)
+	if err := ctx.HID.Click(game.RightButton, screenPos.X, screenPos.Y); err != nil {
+		ctx.Logger.Error("Click failed", "error", err)
+	}
 	utils.PingSleep(utils.Critical, 1000) // Critical operation: Wait for tome activation
 
 	screenPos = ui.GetScreenCoordsForItem(i)
 
-	ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y)
+	if err := ctx.HID.Click(game.LeftButton, screenPos.X, screenPos.Y); err != nil {
+		ctx.Logger.Error("Click failed", "error", err)
+	}
 	utils.PingSleep(utils.Critical, 350) // Critical operation: Wait for item identification
 }

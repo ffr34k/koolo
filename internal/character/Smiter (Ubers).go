@@ -59,7 +59,9 @@ func (f Smiter) PerformSmiteAttack(monsterID data.UnitID) {
 	}
 
 	screenX, screenY := ctx.PathFinder.GameCoordsToScreenCords(monster.Position.X, monster.Position.Y)
-	ctx.HID.Click(game.LeftButton, screenX, screenY)
+	if err := ctx.HID.Click(game.LeftButton, screenX, screenY); err != nil {
+		f.Logger.Error("Click failed", "error", err)
+	}
 }
 
 func (f Smiter) KillMonsterSequence(monsterSelector func(d game.Data) (data.UnitID, bool), skipOnImmunities []stat.Resist) error {

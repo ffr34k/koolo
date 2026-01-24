@@ -274,7 +274,7 @@ func (mng *SupervisorManager) buildSupervisor(supervisorName string, logger *slo
 
 	ctx := context.NewContext(supervisorName)
 
-	hidM := game.NewHID(gr, gi)
+	hidM := game.NewHID(gr, gi, logger)
 	pf := pather.NewPathFinder(gr, ctx.Data, hidM, cfg)
 
 	bm := health.NewBeltManager(ctx.Data, hidM, logger, supervisorName)

@@ -411,7 +411,9 @@ func performMouseAttack(ctx *context.Status, settings attackSettings, x, y int) 
 	}
 
 	x, y = ctx.PathFinder.GameCoordsToScreenCords(x, y)
-	ctx.HID.Click(selectedButton, x, y)
+	if err := ctx.HID.Click(selectedButton, x, y); err != nil {
+		ctx.Logger.Error("Click failed", "error", err)
+	}
 
 	if settings.shouldStandStill {
 		ctx.HID.KeyUp(ctx.Data.KeyBindings.StandStill)

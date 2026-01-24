@@ -310,7 +310,9 @@ func MoveTo(dest data.Position, options ...MoveOption) error {
 					continue
 				}
 				x, y := ui.GameCoordsToScreenCords(obj.Position.X, obj.Position.Y)
-				ctx.HID.Click(game.LeftButton, x, y)
+				if err := ctx.HID.Click(game.LeftButton, x, y); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 
 				// Adaptive delay for obstacle interaction based on ping
 				time.Sleep(time.Millisecond * time.Duration(utils.PingMultiplier(utils.Light, 100)))

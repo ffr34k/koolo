@@ -161,10 +161,12 @@ func (s WindDruid) RecastBuffs() {
 	for i, druSkill := range skills {
 		if kb, found := ctx.Data.KeyBindings.KeyBindingForSkill(druSkill); found {
 			if !ctx.Data.PlayerUnit.States.HasState(states[i]) { // Check if buff is missing
-				ctx.HID.PressKeyBinding(kb)             // Activate skill
-				utils.Sleep(180)                        // Small delay
-				s.HID.Click(game.RightButton, 640, 340) // Cast skill at center screen
-				utils.Sleep(100)                        // Delay to ensure cast completes
+				ctx.HID.PressKeyBinding(kb) // Activate skill
+				utils.Sleep(180)            // Small delay
+				if err := s.HID.Click(game.RightButton, 640, 340); err != nil {
+					s.Logger.Error("Click failed", "error", err)
+				}
+				utils.Sleep(100) // Delay to ensure cast completes
 			}
 		}
 	}

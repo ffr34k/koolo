@@ -266,9 +266,13 @@ func spendSkillPoint(skillID skill.ID, useBulk bool) int {
 		return 0
 	}
 	if ctx.Data.LegacyGraphics {
-		ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y)
+		if err := ctx.HID.Click(game.LeftButton, uiSkillPagePositionLegacy[skillDesc.Page-1].X, uiSkillPagePositionLegacy[skillDesc.Page-1].Y); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 	} else {
-		ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y)
+		if err := ctx.HID.Click(game.LeftButton, uiSkillPagePosition[skillDesc.Page-1].X, uiSkillPagePosition[skillDesc.Page-1].Y); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 	}
 	utils.Sleep(200)
 	if ctx.Data.LegacyGraphics {
@@ -348,15 +352,23 @@ func EnsureSkillBindings() error {
 		}
 		if legacyGraphics {
 			if bindOnLeft {
-				ctx.HID.Click(game.LeftButton, ui.MainSkillButtonXClassic, ui.MainSkillButtonYClassic)
+				if err := ctx.HID.Click(game.LeftButton, ui.MainSkillButtonXClassic, ui.MainSkillButtonYClassic); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 			} else {
-				ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonXClassic, ui.SecondarySkillButtonYClassic)
+				if err := ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonXClassic, ui.SecondarySkillButtonYClassic); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 			}
 		} else {
 			if bindOnLeft {
-				ctx.HID.Click(game.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY)
+				if err := ctx.HID.Click(game.LeftButton, ui.MainSkillButtonX, ui.MainSkillButtonY); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 			} else {
-				ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY)
+				if err := ctx.HID.Click(game.LeftButton, ui.SecondarySkillButtonX, ui.SecondarySkillButtonY); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 			}
 		}
 		utils.Sleep(300)

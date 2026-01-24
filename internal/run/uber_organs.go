@@ -264,7 +264,9 @@ func (o Organs) enterPortal(portal data.Object, areaName string) error {
 	objectY := portalObj.Position.Y - 2
 	mX, mY := ui.GameCoordsToScreenCords(objectX, objectY)
 
-	o.ctx.HID.Click(game.LeftButton, mX, mY)
+	if err := o.ctx.HID.Click(game.LeftButton, mX, mY); err != nil {
+		o.ctx.Logger.Error("Click failed", "error", err)
+	}
 	utils.Sleep(500)
 
 	maxWaitAttempts := 30

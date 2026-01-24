@@ -138,7 +138,9 @@ func InteractEntranceMouse(targetArea area.ID) error {
 						l.Position.X-2,
 						l.Position.Y-2,
 					)
-					ctx.HID.Click(game.LeftButton, screenX, screenY)
+					if err := ctx.HID.Click(game.LeftButton, screenX, screenY); err != nil {
+						ctx.Logger.Error("Click failed", "error", err)
+					}
 					// Escalating retry delay: increases with each attempt
 					utils.RetrySleep(retry, float64(ctx.Data.Game.Ping), 800)
 					ctx.RefreshGameData()
@@ -159,7 +161,9 @@ func InteractEntranceMouse(targetArea area.ID) error {
 		if l.IsEntrance {
 			lx, ly := ctx.PathFinder.GameCoordsToScreenCords(l.Position.X-1, l.Position.Y-1)
 			if ctx.Data.HoverData.UnitType == 5 || ctx.Data.HoverData.UnitType == 2 && ctx.Data.HoverData.IsHovered {
-				ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y)
+				if err := ctx.HID.Click(game.LeftButton, currentMouseCoords.X, currentMouseCoords.Y); err != nil {
+					ctx.Logger.Error("Click failed", "error", err)
+				}
 				waitingForInteraction = true
 				utils.PingSleep(utils.Light, 200) // Light operation: Wait for click registration
 			}

@@ -195,7 +195,9 @@ func SwitchVendorTab(tab int) {
 
 		tabSize := ui.SwitchVendorTabBtnTabSizeClassic
 		x = x + tabSize*tab - tabSize/2
-		ctx.HID.Click(game.LeftButton, x, y)
+		if err := ctx.HID.Click(game.LeftButton, x, y); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.PingSleep(utils.Medium, 500) // Medium operation: Wait for tab switch
 	} else {
 		x := ui.SwitchVendorTabBtnX
@@ -203,7 +205,9 @@ func SwitchVendorTab(tab int) {
 
 		tabSize := ui.SwitchVendorTabBtnTabSize
 		x = x + tabSize*tab - tabSize/2
-		ctx.HID.Click(game.LeftButton, x, y)
+		if err := ctx.HID.Click(game.LeftButton, x, y); err != nil {
+			ctx.Logger.Error("Click failed", "error", err)
+		}
 		utils.PingSleep(utils.Medium, 500) // Medium operation: Wait for tab switch
 	}
 }
