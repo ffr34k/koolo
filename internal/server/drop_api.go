@@ -87,12 +87,12 @@ func (s *HttpServer) initDropCallbacks() {
 // onDropClearFilters is invoked when a Drop finishes and per-supervisor
 // filters should be cleared on the server side.
 func (s *HttpServer) onDropClearFilters(supervisor string) {
-	s.DropMux.Lock()
+	s.dropMux.Lock()
 	if filters, ok := s.DropFilters[supervisor]; ok {
 		filters.Enabled = false
 		s.DropFilters[supervisor] = filters
 	}
-	s.DropMux.Unlock()
+	s.dropMux.Unlock()
 }
 
 // onDropClearPersistentRequest is invoked when a Drop request is cleared
@@ -158,15 +158,16 @@ func (s *HttpServer) registerDropRoutes() {
 	http.HandleFunc("/api/Drop/cancel", s.handleDropCancel)
 	http.HandleFunc("/api/Drop/protection", s.handleDropFilters)
 	http.HandleFunc("/api/Drop/filters", s.handleDropFilters)
+	http.HandleFunc("/api/Drop/history/clear", s.handleDropClearHistory)
 }
 
 func (s *HttpServer) appendDropHistory(entry DropHistoryEntry) {
-	s.DropMux.Lock()
-	defer s.DropMux.Unlock()
+	s.dropMux.Lock()
+	defer s.dropMux.Unlock()
 
-	s.DropHistory = append([]DropHistoryEntry{entry}, s.DropHistory...)
-	if len(s.DropHistory) > 100 {
-		s.DropHistory = s.DropHistory[:100]
+	s.dropHistory = append([]DropHistoryEntry{entry}, s.dropHistory...)
+	if len(s.dropHistory) > 100 {
+		s.dropHistory = s.dropHistory[:100]
 	}
 }
 
@@ -188,16 +189,34 @@ func (s *HttpServer) rememberDropRequest(supervisor, room, password, result stri
 }
 
 func (s *HttpServer) getDropHistory() []DropHistoryEntry {
-	s.DropMux.Lock()
-	defer s.DropMux.Unlock()
-	history := make([]DropHistoryEntry, len(s.DropHistory))
-	copy(history, s.DropHistory)
+	s.dropMux.Lock()
+	defer s.dropMux.Unlock()
+	history := make([]DropHistoryEntry, len(s.dropHistory))
+	copy(history, s.dropHistory)
 	return history
 }
 
+func (s *HttpServer) clearDropHistory() {
+	s.dropMux.Lock()
+	defer s.dropMux.Unlock()
+	s.dropHistory = []DropHistoryEntry{}
+}
+
+func (s *HttpServer) handleDropClearHistory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost && r.Method != http.MethodDelete {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	s.clearDropHistory()
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]string{"status": "cleared"})
+}
+
 func (s *HttpServer) setDropCardInfo(supervisor string, id int, name string) {
-	s.DropMux.Lock()
-	defer s.DropMux.Unlock()
+	s.dropMux.Lock()
+	defer s.dropMux.Unlock()
 	if s.DropCardInfo == nil {
 		s.DropCardInfo = make(map[string]dropCardInfo)
 	}
@@ -209,8 +228,8 @@ func (s *HttpServer) setDropCardInfo(supervisor string, id int, name string) {
 }
 
 func (s *HttpServer) getDropCardInfo(supervisor string) dropCardInfo {
-	s.DropMux.Lock()
-	defer s.DropMux.Unlock()
+	s.dropMux.Lock()
+	defer s.dropMux.Unlock()
 	if s.DropCardInfo == nil {
 		return dropCardInfo{}
 	}
@@ -219,8 +238,8 @@ func (s *HttpServer) getDropCardInfo(supervisor string) dropCardInfo {
 }
 
 func (s *HttpServer) getDropFilters(supervisor string) drop.Filters {
-	s.DropMux.Lock()
-	defer s.DropMux.Unlock()
+	s.dropMux.Lock()
+	defer s.dropMux.Unlock()
 	if filters, ok := s.DropFilters[supervisor]; ok && filters.Enabled {
 		return filters.Normalize()
 	}
@@ -230,8 +249,8 @@ func (s *HttpServer) getDropFilters(supervisor string) drop.Filters {
 }
 
 func (s *HttpServer) setDropFilters(supervisor string, p drop.Filters) drop.Filters {
-	s.DropMux.Lock()
-	defer s.DropMux.Unlock()
+	s.dropMux.Lock()
+	defer s.dropMux.Unlock()
 	s.DropFilters[supervisor] = p.Normalize()
 	return s.DropFilters[supervisor]
 }

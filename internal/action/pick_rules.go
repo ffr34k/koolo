@@ -11,6 +11,21 @@ import (
 // If you already have tier logic elsewhere, assign this variable appropriately.
 var ShouldBuyByTiers func(data.Item) bool
 
+// MatchesPickitRules checks if an item matches any pickit NIP rule (for drop mode).
+// Returns true if the item is considered "good" by pickit rules.
+// Uses FullMatch only (not Partial) to align with grand charm reroll logic.
+func MatchesPickitRules(i data.Item) bool {
+	ctx := context.Get()
+	if ctx == nil || ctx.Data.CharacterCfg.Runtime.Rules == nil {
+		return false
+	}
+
+	// Evaluate all rules ignoring tiers
+	// Only FullMatch counts as "matching pickit" - Partial matches are kept as reroll candidates
+	_, result := ctx.Data.CharacterCfg.Runtime.Rules.EvaluateAllIgnoreTiers(i)
+	return result == nip.RuleResultFullMatch
+}
+
 // shouldMatchRulesOnly evaluates NIP rules and tiers for shopping without any
 // low‑gold fallbacks.  It returns true only when a given item matches
 // strict pickit rules or better‑than‑equipped tiers.

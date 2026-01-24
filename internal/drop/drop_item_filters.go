@@ -19,6 +19,10 @@ type ItemQuantity struct {
 type Filters struct {
 	Enabled             bool           `json:"enabled"`
 	DropperOnlySelected bool           `json:"DropperOnlySelected"`
+	UsePickit           bool           `json:"usePickit"`    // Drop items that match pickit rules (good items)
+	DropLocation        string         `json:"dropLocation"` // Town to drop in: "act1", "act2", "act3", "act4", "act5" (default: "act1")
+	DropGems            bool           `json:"dropGems"`     // Allow dropping gems that match pickit (default: false = protected)
+	DropJewels          bool           `json:"dropJewels"`   // Allow dropping jewels that match pickit (default: false = protected)
 	SelectedRunes       []ItemQuantity `json:"selectedRunes"`
 	SelectedGems        []ItemQuantity `json:"selectedGems"`
 	SelectedKeyTokens   []ItemQuantity `json:"selectedKeyTokens"`
@@ -98,7 +102,7 @@ type ContextFilters struct {
 	mu        sync.RWMutex
 	filters   Filters
 	filterSet map[string]struct{}
-	Droppered map[string]int
+	droppered map[string]int // private to enforce mutex access
 }
 
 var runeNames = map[string]struct{}{
@@ -148,7 +152,7 @@ func NewContextFilters() *ContextFilters {
 	return &ContextFilters{
 		filters:   Filters{},
 		filterSet: make(map[string]struct{}),
-		Droppered: make(map[string]int),
+		droppered: make(map[string]int),
 	}
 }
 
@@ -195,14 +199,14 @@ func (s *ContextFilters) HasRemainingDropQuota(name string) bool {
 	if maxQty <= 0 {
 		return true
 	}
-	return s.Droppered[strings.ToLower(name)] < maxQty
+	return s.droppered[strings.ToLower(name)] < maxQty
 }
 
 // ResetDropperedItemCounts clears all per-item Droppered counters for the current run.
 func (s *ContextFilters) ResetDropperedItemCounts() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.Droppered = make(map[string]int)
+	s.droppered = make(map[string]int)
 }
 
 // RecordDropperedItem increments the Droppered count used for quota tracking.
@@ -211,10 +215,10 @@ func (s *ContextFilters) RecordDropperedItem(name string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if maxQty := s.filters.GetItemQuantity(name); maxQty > 0 {
-		if s.Droppered == nil {
-			s.Droppered = make(map[string]int)
+		if s.droppered == nil {
+			s.droppered = make(map[string]int)
 		}
-		s.Droppered[key] = s.Droppered[key] + 1
+		s.droppered[key] = s.droppered[key] + 1
 	}
 }
 
@@ -222,7 +226,7 @@ func (s *ContextFilters) RecordDropperedItem(name string) {
 func (s *ContextFilters) GetDropperedItemCount(name string) int {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	return s.Droppered[strings.ToLower(name)]
+	return s.droppered[strings.ToLower(name)]
 }
 
 // DropperOnlySelected reports whether "Dropper only selected items" mode is enabled.
@@ -237,6 +241,37 @@ func (s *ContextFilters) DropFiltersEnabled() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.filters.Enabled
+}
+
+// UsePickitEnabled reports whether pickit-based drop mode is enabled.
+func (s *ContextFilters) UsePickitEnabled() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.filters.Enabled && s.filters.UsePickit
+}
+
+// DropGemsEnabled reports whether gems can be dropped (default false = protected).
+func (s *ContextFilters) DropGemsEnabled() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.filters.DropGems
+}
+
+// DropJewelsEnabled reports whether jewels can be dropped (default false = protected).
+func (s *ContextFilters) DropJewelsEnabled() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.filters.DropJewels
+}
+
+// GetDropLocation returns the configured drop location (town), defaulting to "act1".
+func (s *ContextFilters) GetDropLocation() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	if s.filters.DropLocation == "" {
+		return "act1"
+	}
+	return s.filters.DropLocation
 }
 
 // GetDropItemQuantity returns the configured max Drop quantity for the given item.
@@ -284,7 +319,7 @@ func (s *ContextFilters) AreDropQuotasSatisfied() bool {
 			continue
 		}
 		hasFinite = true
-		if s.Droppered[strings.ToLower(item.Name)] < item.Quantity {
+		if s.droppered[strings.ToLower(item.Name)] < item.Quantity {
 			return false
 		}
 	}
@@ -293,7 +328,7 @@ func (s *ContextFilters) AreDropQuotasSatisfied() bool {
 			continue
 		}
 		hasFinite = true
-		if s.Droppered[strings.ToLower(item.Name)] < item.Quantity {
+		if s.droppered[strings.ToLower(item.Name)] < item.Quantity {
 			return false
 		}
 	}
@@ -302,7 +337,7 @@ func (s *ContextFilters) AreDropQuotasSatisfied() bool {
 			continue
 		}
 		hasFinite = true
-		if s.Droppered[strings.ToLower(item.Name)] < item.Quantity {
+		if s.droppered[strings.ToLower(item.Name)] < item.Quantity {
 			return false
 		}
 	}

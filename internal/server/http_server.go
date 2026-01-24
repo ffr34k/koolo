@@ -58,11 +58,11 @@ type HttpServer struct {
 	wsServer            *WebSocketServer
 	pickitAPI           *PickitAPI
 	sequenceAPI         *SequenceAPI
-	DropHistory         []DropHistoryEntry
+	dropHistory         []DropHistoryEntry // private to enforce mutex access
 	RunewordHistory     []RunewordHistoryEntry
 	DropFilters         map[string]drop.Filters
 	DropCardInfo        map[string]dropCardInfo
-	DropMux             sync.Mutex
+	dropMux             sync.Mutex // private to enforce mutex access
 	RunewordMux         sync.Mutex
 	autoStartPromptOnce sync.Once
 }
