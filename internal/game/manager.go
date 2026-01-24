@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -370,7 +371,7 @@ func StartGame(username string, password string, authmethod string, authToken st
 
 	// Start the game with retry logic for GPU initialization errors
 	for attempt := 0; attempt < maxGPURetries; attempt++ {
-		cmd := exec.Command(config.Koolo.D2RPath+"\\D2R.exe", fullArgs...)
+		cmd := exec.Command(filepath.Join(config.Koolo.D2RPath, "D2R.exe"), fullArgs...)
 		err = cmd.Start()
 		if err != nil {
 			return 0, 0, err
